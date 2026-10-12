@@ -47,11 +47,15 @@ function M:Build()
     bg:SetSize(20, 20)
     bg:SetPoint("CENTER")
 
+    -- Eigenes Symbol (Textures\Icon.tga, aus media\logo.py), rund
+    -- zugeschnitten wie Blizzards Minimap-Knöpfe. Ohne Maske ragten die
+    -- Ecken unter dem Ring hervor.
     local icon = b:CreateTexture(nil, "ARTWORK")
-    icon:SetTexture("Interface\\Icons\\INV_Misc_Note_01")
-    icon:SetSize(18, 18)
+    icon:SetTexture("Interface\\AddOns\\Marknotes\\Textures\\Icon")
+    icon:SetSize(20, 20)
     icon:SetPoint("CENTER")
-    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetTexCoord(0.06, 0.94, 0.06, 0.94)
+    pcall(icon.SetMask, icon, "Interface\\CharacterFrame\\TempPortraitAlphaMask")
     b.icon = icon
 
     local ring = b:CreateTexture(nil, "OVERLAY")

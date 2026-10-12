@@ -5,7 +5,7 @@
 ## Author: LunaSans-Thrall
 ## Version: @project-version@
 ## SavedVariables: MarknotesDB
-## IconTexture: Interface\Icons\INV_Misc_Note_01
+## IconTexture: Interface\AddOns\Marknotes\Textures\Icon
 ## AllowLoadGameType: retail
 ## X-Category: Miscellaneous
 ## X-License: All Rights Reserved

@@ -5,3 +5,4 @@ package-as: Marknotes
 ignore:
   - README.md
   - docs
+  - media
