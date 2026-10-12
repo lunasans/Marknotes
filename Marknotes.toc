@@ -9,6 +9,7 @@
 ## AllowLoadGameType: retail
 ## X-Category: Miscellaneous
 ## X-License: All Rights Reserved
+## X-Wago-ID: XKqEmlKy
 
 Locales.lua
 Core.lua
