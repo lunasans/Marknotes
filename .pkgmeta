@@ -1,0 +1,7 @@
+package-as: Marknotes
+
+# Nur die Addon-Dateien gehen ins Paket. Punktdateien (.github,
+# .gitignore, .pkgmeta) lässt der Packager von sich aus weg.
+ignore:
+  - README.md
+  - docs

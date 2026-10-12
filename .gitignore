@@ -1,0 +1,4 @@
+# Lokale Pakete (BigWigs-Packager, Hand-ZIPs)
+.release/
+dist/
+*.zip

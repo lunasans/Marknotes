@@ -1,0 +1,17 @@
+## Interface: 120100
+## Title: |cff7aa2f7Mark|rnotes
+## Notes: Notes with Markdown: tables, checklists, links and item links with Auction House search.
+## Notes-deDE: Notizen mit Markdown: Tabellen, Checklisten, Links und Gegenstandslinks mit Auktionshaus-Suche.
+## Author: LunaSans-Thrall
+## Version: @project-version@
+## SavedVariables: MarknotesDB
+## IconTexture: Interface\Icons\INV_Misc_Note_01
+## AllowLoadGameType: retail
+## X-Category: Miscellaneous
+## X-License: All Rights Reserved
+
+Locales.lua
+Core.lua
+Markdown.lua
+Notes.lua
+Minimap.lua

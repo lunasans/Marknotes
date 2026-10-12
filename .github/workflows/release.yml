@@ -1,0 +1,32 @@
+# Paket bauen und veröffentlichen, sobald ein Tag gepusht wird:
+#
+#   git tag v1.0.1
+#   git push origin v1.0.1
+#
+# Der BigWigs-Packager baut die ZIP (Inhalt laut .pkgmeta), setzt die
+# Version aus dem Tag in die TOC (@project-version@) und lädt sie hoch:
+#   - als GitHub-Release, immer
+#   - zu Wago, sobald die TOC "## X-Wago-ID:" trägt und das Secret
+#     WAGO_API_TOKEN im Repository hinterlegt ist
+# Tags mit "alpha"/"beta" im Namen werden als Alpha/Beta veröffentlicht.
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: BigWigsMods/packager@v2
