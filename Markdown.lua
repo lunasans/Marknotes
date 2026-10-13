@@ -16,6 +16,7 @@
 --   | a | b |         Tabellen, mit |---|:--:|--:| für Kopf und Ausrichtung
 --   [Text](https://…) und nackte https://-Adressen als Links
 --   {stern} {totenschädel} {rt1}  Zielmarkierungen wie im Chat
+--   {tank} {heiler} {dd}          Rollen
 --
 -- Links öffnet WoW nicht im Browser - für Addons gibt es diesen Weg
 -- nicht. Ein Klick legt die Adresse markiert ins Kopierfenster.
@@ -248,6 +249,22 @@ function MD.MarkerIcon(i, size)
     return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i .. ":" .. (size or 0) .. "|t"
 end
 
+-- Rollen fürs Einteilen von Gruppen: {tank}, {heiler}, {dd} und Co.
+-- Eigene Texturen (Textures\Role-*.tga, aus media\roles.py).
+local ROLES = {
+    tank = "Tank",
+    heal = "Healer",   healer = "Healer",   heiler = "Healer",   heals = "Healer",
+    dd = "Damager",    dps = "Damager",     damage = "Damager",  schaden = "Damager",
+}
+MD.ROLES = { "Tank", "Healer", "Damager" }
+MD.ROLE_NAMES_EN = { Tank = "tank", Healer = "healer", Damager = "dps" }
+MD.ROLE_NAMES_DE = { Tank = "tank", Healer = "heiler", Damager = "dd" }
+MD.ROLE_TEXTURE = "Interface\\AddOns\\Marknotes\\Textures\\Role-"
+
+function MD.RoleIcon(role, size)
+    return "|T" .. MD.ROLE_TEXTURE .. role .. ":" .. (size or 0) .. "|t"
+end
+
 local function linkFor(url, label)
     return "|Hurl:" .. url .. "|h" .. MD.COLOR.link .. label .. "|r|h"
 end
@@ -275,8 +292,11 @@ function MD.Inline(s)
 
     -- Unbekanntes in {} bleibt stehen, wie es ist.
     s = s:gsub("{([^{}]+)}", function(name)
-        local i = MARKERS[lower(name)]
+        local key = lower(name)
+        local i = MARKERS[key]
         if i then return stash(MD.MarkerIcon(i)) end
+        local role = ROLES[key]
+        if role then return stash(MD.RoleIcon(role)) end
     end)
 
     s = s:gsub("%[([^%]]+)%]%(([^%)%s]+)%)", function(label, url)

@@ -384,30 +384,41 @@ local TOOLS = {
     { "Block", L["Code block  ``` ... ```"], function() M:InsertBlock("```\n\n```", 4, 0) end },
     { L["Rule"], L["Horizontal rule  ---"], function() M:InsertBlock("---") end },
     false,
-    { ns.Markdown.MarkerIcon(1, 14), L["Raid marker  {star} {skull} ...\nLike in chat. English, German or {rt1} to {rt8}."],
+    { ns.Markdown.MarkerIcon(1, 14), L["Raid marker and role  {star} {skull} {tank} ...\nLike in chat. English, German or {rt1} to {rt8}.\nRoles: {tank} {healer} {dps}."],
       function(btn) M:MarkerMenu(btn) end },
 }
 
--- Auswahl der acht Zielmarkierungen unter dem Knopf. Hängt an der
--- Werkzeugleiste und verschwindet mit ihr.
+-- Auswahl unter dem Knopf: die acht Zielmarkierungen, nach einer Lücke
+-- die drei Rollen. Hängt an der Werkzeugleiste und verschwindet mit ihr.
 function M:MarkerMenu(btn)
     local menu = self.markerMenu
     if not menu then
+        local MD = ns.Markdown
+        local de = GetLocale() == "deDE"
+        local entries = {}
+        for i = 1, 8 do
+            entries[#entries + 1] = { "Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i,
+                                      (de and MD.MARKER_NAMES_DE or MD.MARKER_NAMES_EN)[i] }
+        end
+        for _, role in ipairs(MD.ROLES) do
+            entries[#entries + 1] = { MD.ROLE_TEXTURE .. role,
+                                      (de and MD.ROLE_NAMES_DE or MD.ROLE_NAMES_EN)[role], gap = true }
+        end
+
+        local SPLIT = 8     -- Lücke zwischen Markern und Rollen
         menu = U:Skin(CreateFrame("Frame", nil, self.frame.toolbar), 0.95)
         menu:SetFrameLevel(self.frame.toolbar:GetFrameLevel() + 30)
-        menu:SetSize(8 * 24 + 6, 30)
-        local names = GetLocale() == "deDE" and ns.Markdown.MARKER_NAMES_DE
-                      or ns.Markdown.MARKER_NAMES_EN
-        for i = 1, 8 do
+        menu:SetSize(#entries * 24 + SPLIT + 6, 30)
+        for i, e in ipairs(entries) do
             local b = CreateFrame("Button", nil, menu)
             b:SetSize(22, 22)
-            b:SetPoint("LEFT", 4 + (i - 1) * 24, 0)
+            b:SetPoint("LEFT", 4 + (i - 1) * 24 + (e.gap and SPLIT or 0), 0)
             local icon = b:CreateTexture(nil, "ARTWORK")
             icon:SetAllPoints()
-            icon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i)
+            icon:SetTexture(e[1])
             b:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
             b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.2)
-            local tag = "{" .. names[i] .. "}"
+            local tag = "{" .. e[2] .. "}"
             b:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
                 GameTooltip:AddLine(tag, 1, 1, 1)

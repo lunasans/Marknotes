@@ -12,6 +12,7 @@
   - Quotes, horizontal rules and code blocks with a **Copy** button
   - Links – click to copy the address
   - **Raid markers** like in chat: `{skull}`, `{star}`, `{rt1}`–`{rt8}` (German names work too)
+  - **Role icons** for splitting up groups: `{tank}`, `{healer}` / `{heal}`, `{dps}` / `{dd}`
 - **Toolbar** – one click for headings, bold, lists, checkboxes, tables, links and more
 - **Item links**
   - Shift-click any item while the window is open
@@ -58,6 +59,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
   - Zitate, Trennlinien und Codeblöcke mit **Kopieren**-Knopf
   - Links – ein Klick kopiert die Adresse
   - **Zielmarkierungen** wie im Chat: `{totenschädel}`, `{stern}`, `{rt1}`–`{rt8}` (englische Namen gehen auch)
+  - **Rollen-Symbole** zum Einteilen von Gruppen: `{tank}`, `{heiler}` / `{heal}`, `{dd}` / `{dps}`
 - **Werkzeugleiste** – ein Klick für Überschriften, Fett, Listen, Checkboxen, Tabellen, Links und mehr
 - **Gegenstandslinks**
   - Shift-Klick auf einen Gegenstand, solange das Fenster offen ist
