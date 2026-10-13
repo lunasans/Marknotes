@@ -49,18 +49,27 @@ L["Sets the note back to \"pin: no\"."] = "Setzt die Notiz auf \"anheften: nein\
 -- Teilen
 L["Share"]                 = "Teilen"
 L["Note"]                  = "Notiz"
-L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added."] =
-    "Diese Notiz an die Gruppe oder den Schlachtzug senden.\nDie anderen brauchen Marknotes auch und werden vorher gefragt."
+L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added.\nAfter that, every change is sent automatically."] =
+    "Diese Notiz an die Gruppe oder den Schlachtzug senden.\nDie anderen brauchen Marknotes auch und werden vorher gefragt.\nDanach geht jede Änderung automatisch mit."
+L["Shared"]                = "Geteilt"
+L["Send again"]            = "Erneut senden"
+L["Stop sharing"]          = "Teilen beenden"
+L["This note is shared - changes go to your group automatically."] =
+    "Diese Notiz ist geteilt - Änderungen gehen automatisch an die Gruppe."
+L["Note is no longer shared. The others keep their copy."] =
+    "Notiz wird nicht mehr geteilt. Die anderen behalten ihre Kopie."
 L["You are not in a group."] = "Du bist in keiner Gruppe."
 L["This note is too long to share."] = "Diese Notiz ist zu lang zum Teilen."
 L["Sending note \"%s\" - this takes a few seconds."] =
     "Notiz \"%s\" wird gesendet - das dauert ein paar Sekunden."
-L["Note \"%s\" sent to your group."] = "Notiz \"%s\" an die Gruppe gesendet."
+L["Note \"%s\" shared with your group. Changes are sent automatically."] =
+    "Notiz \"%s\" mit der Gruppe geteilt. Änderungen gehen automatisch mit."
 L["Sharing failed - addon messages are blocked right now (e.g. during a boss fight)."] =
     "Teilen fehlgeschlagen - Addon-Nachrichten sind gerade gesperrt (z. B. im Bosskampf)."
 L["%s shares the note \"%s\" with you.\nAdd it to your notes?"] =
     "%s teilt die Notiz \"%s\" mit dir.\nZu deinen Notizen hinzufügen?"
-L["Note \"%s\" from %s added."] = "Notiz \"%s\" von %s hinzugefügt."
+L["Note \"%s\" from %s added. It updates automatically when %s changes it."] =
+    "Notiz \"%s\" von %s hinzugefügt. Sie aktualisiert sich, wenn %s sie ändert."
 L["Note \"%s\" from %s updated."] = "Notiz \"%s\" von %s aktualisiert."
 
 -- Links
