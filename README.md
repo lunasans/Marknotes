@@ -59,7 +59,7 @@ opacity: 70
 | `title` | `yes` / `no` | show the title bar (default yes) |
 | `combat` | `hide` / `show` | hide in combat |
 
-Drag the window to move it, double-click the title bar to open the note, click **×** to unpin and the lock icon to lock it in place. Checkboxes can be ticked right on screen. Several notes can be pinned at once. German keys (`anheften`, `breite`, …) work too.
+Drag the window to move it, double-click the title bar to open the note, click **×** to unpin and the lock icon to lock it in place. Drag the grip in the bottom right corner to resize it (this writes `width` and `height` into the note); double-click the grip and the height fits the text again. Checkboxes can be ticked right on screen. Several notes can be pinned at once. German keys (`anheften`, `breite`, …) work too.
 
 ## Good to know
 
@@ -136,7 +136,7 @@ deckkraft: 70
 | `titel` | `ja` / `nein` | Titelzeile zeigen (Standard ja) |
 | `kampf` | `ausblenden` / `zeigen` | im Kampf ausblenden |
 
-Fenster ziehen zum Verschieben, Doppelklick auf die Titelzeile öffnet die Notiz, **×** löst sie, das Schloss fixiert sie. Checkboxen lassen sich direkt auf dem Bildschirm abhaken. Mehrere Notizen können gleichzeitig angeheftet sein. Englische Schlüssel (`pin`, `width`, …) gehen auch.
+Fenster ziehen zum Verschieben, Doppelklick auf die Titelzeile öffnet die Notiz, **×** löst sie, das Schloss fixiert sie. Der Griff unten rechts ändert die Größe (schreibt `breite` und `höhe` in die Notiz); Doppelklick auf den Griff, und die Höhe passt sich wieder dem Text an. Checkboxen lassen sich direkt auf dem Bildschirm abhaken. Mehrere Notizen können gleichzeitig angeheftet sein. Englische Schlüssel (`pin`, `width`, …) gehen auch.
 
 ## Gut zu wissen
 

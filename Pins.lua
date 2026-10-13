@@ -190,6 +190,36 @@ local function create()
     ns.Notes:LinkHandlers(content, view)
     f.view = view
 
+    -- Griff unten rechts: Ziehen setzt "breite" und "höhe" in der Notiz,
+    -- Doppelklick nimmt "höhe" heraus, dann passt sich das Fenster wieder
+    -- dem Text an. Fixiert ist der Griff weg.
+    local before, lastClick = nil, 0
+    W:MakeResizable(f, {
+        minWidth = 150, minHeight = 60, maxWidth = 1000, maxHeight = 1200,
+        onStop = function(w, h)
+            savePlace(f)
+            if math.abs(w - before[1]) >= 1 or math.abs(h - before[2]) >= 1 then
+                P:SetSize(f.note, math.floor(w + 0.5), math.floor(h + 0.5))
+                return
+            end
+            local now = GetTime()
+            if now - lastClick < 0.4 then
+                lastClick = 0
+                P:SetSize(f.note, f.settings.width, nil)
+            else
+                lastClick = now
+            end
+        end,
+    })
+    f.grip:HookScript("OnMouseDown", function() before = { f:GetSize() } end)
+    f.grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L["Drag: resize"], 1, 1, 1)
+        GameTooltip:AddLine(L["Double-click: height fits the text again."], 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    f.grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     return f
 end
 
@@ -232,6 +262,7 @@ local function layout(f, cfg)
     f.head:SetShown(cfg.title)
     f.head.title:SetText(ns.Notes.Label(f.note, f.index or 1))
     f.head.lock:Paint()
+    f.grip:SetShown(not cfg.lock)
     local top = cfg.title and (HEADER + 4) or PAD
 
     local inner = cfg.width - 2 * PAD
@@ -307,6 +338,14 @@ end
 
 function P:SetLock(note, on)
     note.text = MD.SetLock(note.text, on, GetLocale() == "deDE")
+    note.updated = time()
+    self:Update()
+    ns.Notes:NoteChanged(note)
+    ns.Share:Changed(note)
+end
+
+function P:SetSize(note, width, height)
+    note.text = MD.SetSize(note.text, width, height, GetLocale() == "deDE")
     note.updated = time()
     self:Update()
     ns.Notes:NoteChanged(note)

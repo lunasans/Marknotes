@@ -223,8 +223,8 @@ local function changed(note)
     ns.Pins:Update()
 end
 
--- Neue Fassung in eine angenommene Notiz übernehmen: Haken, Anheften
--- und Fixieren bleiben, wie der Empfänger sie hatte.
+-- Neue Fassung in eine angenommene Notiz übernehmen: Haken, Anheften,
+-- Fixieren und Größe bleiben, wie der Empfänger sie hatte.
 local function apply(note, o)
     local text = MD.KeepChecks(o.text, note.text)
     local meta = MD.Meta(note.text)
@@ -241,6 +241,12 @@ local function apply(note, o)
         if newMeta and MD.Bool(newMeta.lock, false) ~= locked then
             text = MD.SetLock(text, locked, GetLocale() == "deDE")
         end
+    end
+    -- Ohne "höhe" beim Empfänger passt sich sein Fenster dem Text an;
+    -- das bleibt so, auch wenn der Sender eine Höhe gesetzt hat.
+    local newMeta = meta and MD.Meta(text)
+    if newMeta and (meta.width ~= newMeta.width or meta.height ~= newMeta.height) then
+        text = MD.SetSize(text, meta.width or newMeta.width, meta.height, GetLocale() == "deDE")
     end
     note.text = text
     note.title = o.title

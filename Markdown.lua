@@ -192,39 +192,60 @@ function MD.Number(v, fallback, min, max)
     return math.max(min, math.min(max, n))
 end
 
-local GERMAN = { pin = "anheften", lock = "fixieren" }
+local GERMAN = { pin = "anheften", lock = "fixieren", width = "breite", height = "höhe" }
 
--- Eine ja/nein-Einstellung im vorhandenen Kopfblock setzen. Liefert die
+-- Eine Einstellung im vorhandenen Kopfblock setzen: true/false als
+-- ja/nein, Zahlen wie sie sind, nil nimmt die Zeile heraus. Liefert die
 -- Zeilen, oder nil, wenn es keinen Kopfblock gibt.
-local function setFlag(text, key, on, german)
+local function setValue(text, key, value, german)
     local meta, close, at = MD.Meta(text)
     if not meta then return nil end
     local ls = lines(text)
 
+    local function word(de)
+        if value == true then return de and "ja" or "yes" end
+        if value == false then return de and "nein" or "no" end
+        return tostring(value)
+    end
+
     if at[key] then
-        local k = ls[at[key]]:match("^%s*([^:%s]+)")
-        local lk = lower(k)
-        local de = KEYS[lk] == key and lk ~= key
-        ls[at[key]] = k .. ": " .. (on and (de and "ja" or "yes") or (de and "nein" or "no"))
-    else
-        table.insert(ls, close, (german and GERMAN[key] or key) .. ": "
-            .. (on and (german and "ja" or "yes") or (german and "nein" or "no")))
+        if value == nil then
+            table.remove(ls, at[key])
+        else
+            local k = ls[at[key]]:match("^%s*([^:%s]+)")
+            local lk = lower(k)
+            local de = KEYS[lk] == key and lk ~= key
+            ls[at[key]] = k .. ": " .. word(de)
+        end
+    elseif value ~= nil then
+        table.insert(ls, close, (german and GERMAN[key] or key) .. ": " .. word(german))
     end
     return ls
+end
+
+local function set(text, key, value, german)
+    local ls = setValue(text, key, value, german)
+    return ls and table.concat(ls, "\n") or text
 end
 
 -- "fixieren" ein- oder ausschalten. Nur mit Kopfblock - ohne ist die
 -- Notiz ohnehin nicht angeheftet.
 function MD.SetLock(text, on, german)
-    local ls = setFlag(text, "lock", on, german)
-    return ls and table.concat(ls, "\n") or text
+    return set(text, "lock", on, german)
+end
+
+-- "breite" und "höhe" setzen. Höhe nil: Zeile weg, das Fenster passt
+-- sich wieder dem Text an.
+function MD.SetSize(text, width, height, german)
+    text = set(text, "width", width, german)
+    return set(text, "height", height, german)
 end
 
 -- "anheften" ein- oder ausschalten und den neuen Text liefern. Fehlt der
 -- Kopfblock, kommt einer an den Anfang; fehlt nur der Schlüssel, kommt
 -- er in den Block. Eine vorhandene Zeile behält ihre Sprache.
 function MD.SetPin(text, on, german)
-    local ls = setFlag(text, "pin", on, german)
+    local ls = setValue(text, "pin", on, german)
     if not ls then
         ls = lines(text)
         local head = german
