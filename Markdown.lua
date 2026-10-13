@@ -107,8 +107,124 @@ local function indentOf(ws)
     return math.min(4, math.floor(width / 2))
 end
 
+-- ---------------------------------------------------------------- Einstellungen
+
+-- Einstellungen stehen in der Notiz selbst, als Kopfblock wie bei
+-- Obsidian oder Jekyll:
+--
+--   ---
+--   anheften: ja
+--   breite: 300
+--   ---
+--
+-- Englische und deutsche Schlüssel gehen beide. Als Kopfblock zählt das
+-- nur, wenn darin ausschließlich "schlüssel: wert"-Zeilen stehen und
+-- mindestens ein bekannter Schlüssel dabei ist - eine Notiz, die mit
+-- einer Trennlinie beginnt, bleibt eine Notiz mit Trennlinie.
+local KEYS = {
+    pin = "pin",          anheften = "pin",
+    width = "width",      breite = "width",
+    height = "height",    ["höhe"] = "height",    hoehe = "height",
+    opacity = "opacity",  alpha = "opacity",      deckkraft = "opacity",
+    scale = "scale",      skalierung = "scale",   ["größe"] = "scale",
+    lock = "lock",        fixieren = "lock",      sperren = "lock",
+    title = "title",      titel = "title",
+    combat = "combat",    kampf = "combat",
+}
+
+local YES = { ["ja"] = true, yes = true, ["true"] = true, on = true, an = true,
+              ["1"] = true, zeigen = true, show = true }
+local NO  = { nein = true, no = true, ["false"] = true, off = true, aus = true,
+              ["0"] = true, ausblenden = true, hide = true, verstecken = true }
+
+local function lines(text)
+    local out = {}
+    for line in ((text or ""):gsub("\r\n", "\n") .. "\n"):gmatch("(.-)\n") do
+        out[#out + 1] = line
+    end
+    return out
+end
+
+-- Kopfblock lesen. Liefert die Einstellungen (Schlüssel auf Englisch,
+-- Werte roh und klein geschrieben), die Zeile mit dem schließenden ---
+-- und je Einstellung die Zeile, in der sie steht. Ohne Kopfblock nil.
+function MD.Meta(text)
+    local ls = lines(text)
+    if not (ls[1] or ""):match("^%-%-%-%s*$") then return nil end
+
+    local meta, at, known = {}, {}, false
+    for i = 2, #ls do
+        local line = ls[i]
+        if line:match("^%-%-%-%s*$") then
+            if not known then return nil end
+            return meta, i, at
+        end
+        if line:match("%S") then
+            local k, v = line:match("^%s*([^:%s]+)%s*:%s*(.-)%s*$")
+            if not k then return nil end
+            local key = KEYS[k:lower()]
+            if key then
+                meta[key], at[key], known = v:lower(), i, true
+            end
+        end
+    end
+    return nil
+end
+
+-- Wert als ja/nein lesen; unbekannt oder leer: fallback.
+function MD.Bool(v, fallback)
+    if v == nil then return fallback end
+    if YES[v] then return true end
+    if NO[v] then return false end
+    return fallback
+end
+
+-- Wert als Zahl lesen, auf min..max begrenzt. "70%" geht auch.
+function MD.Number(v, fallback, min, max)
+    local n = tonumber(((v or ""):gsub("%%%s*$", "")))
+    if not n then return fallback end
+    return math.max(min, math.min(max, n))
+end
+
+-- "anheften" ein- oder ausschalten und den neuen Text liefern. Fehlt der
+-- Kopfblock, kommt einer an den Anfang; fehlt nur der Schlüssel, kommt
+-- er in den Block. Eine vorhandene Zeile behält ihre Sprache.
+function MD.SetPin(text, on, german)
+    local meta, close, at = MD.Meta(text)
+    local ls = lines(text)
+
+    if meta and at.pin then
+        local line = ls[at.pin]
+        local k = line:match("^%s*([^:%s]+)")
+        local de = k:lower() == "anheften"
+        ls[at.pin] = k .. ": " .. (on and (de and "ja" or "yes") or (de and "nein" or "no"))
+    elseif meta then
+        table.insert(ls, close, (german and "anheften: " or "pin: ")
+            .. (on and (german and "ja" or "yes") or (german and "nein" or "no")))
+    else
+        local head = german
+            and { "---", "anheften: " .. (on and "ja" or "nein"), "breite: 300", "deckkraft: 70", "---" }
+            or  { "---", "pin: " .. (on and "yes" or "no"), "width: 300", "opacity: 70", "---" }
+        for k = #head, 1, -1 do table.insert(ls, 1, head[k]) end
+    end
+
+    return table.concat(ls, "\n")
+end
+
+-- Text ohne Kopfblock (für Listenbeschriftung und Ähnliches).
+function MD.Body(text)
+    local _, close = MD.Meta(text)
+    if not close then return text or "" end
+    local ls = lines(text)
+    return table.concat(ls, "\n", close + 1)
+end
+
+-- ---------------------------------------------------------------- Blöcke
+
 -- Text in Blöcke zerlegen. Jeder Block mit Zeilennummer, wo es eine
 -- Rückverbindung braucht (Checkboxen schreiben in ihre Zeile zurück).
+-- Ein Kopfblock mit Einstellungen wird übersprungen, die Zeilennummern
+-- zählen ihn aber mit.
 function MD.Parse(text)
     text = (text or ""):gsub("\r\n", "\n")
 
@@ -118,7 +234,8 @@ function MD.Parse(text)
     local blocks = {}
     local function add(b) blocks[#blocks + 1] = b end
 
-    local i = 1
+    local _, close = MD.Meta(text)
+    local i = (close or 0) + 1
     while i <= #lines do
         local line = lines[i]
 

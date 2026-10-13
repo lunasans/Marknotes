@@ -44,12 +44,14 @@ end
 
 local function labelFor(note, index)
     if note.title and note.title:match("%S") then return note.title end
-    -- Sonst die erste Zeile, ohne Links und Farbcodes.
-    local first = (note.text or ""):match("^[^\n]*") or ""
+    -- Sonst die erste Zeile, ohne Einstellungen, Links und Farbcodes.
+    local first = ns.Markdown.Body(note.text):match("^%s*([^\n]*)") or ""
     first = U:StripFormatting(first):gsub("^%s+", "")
     if first ~= "" then return first end
     return L["Note %d"]:format(index)
 end
+
+M.Label = labelFor
 
 local function isEmpty(note)
     return note and not (note.title or ""):match("%S")
@@ -74,6 +76,7 @@ function M:Delete()
     table.remove(s.list, s.current)
     s.current = math.max(1, math.min(s.current, #s.list))
     self:Refresh()
+    ns.Pins:Update()
 end
 
 function M:Select(index)
@@ -419,6 +422,47 @@ local function skinInput(box)
     return back
 end
 
+-- Links in einer gerenderten Ansicht: Tooltip, Adressen kopieren,
+-- Gegenstände im Auktionshaus suchen. Auch für angeheftete Notizen.
+function M:LinkHandlers(content, view)
+    content:SetScript("OnHyperlinkEnter", function(self, link)
+        view.overLink = true
+        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+        local url = link:match("^url:(.+)$")
+        if url then
+            GameTooltip:AddLine(url, 1, 1, 1, true)
+            GameTooltip:AddLine(L["Click: copy address"], 0.48, 0.63, 0.97)
+        else
+            pcall(GameTooltip.SetHyperlink, GameTooltip, link)
+            if link:match("^item:") then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(L["Click: search the Auction House"], 0.48, 0.63, 0.97)
+            end
+        end
+        GameTooltip:Show()
+    end)
+    content:SetScript("OnHyperlinkLeave", function()
+        view.overLink = false
+        GameTooltip:Hide()
+    end)
+    content:SetScript("OnHyperlinkClick", function(_, link, text, button)
+        local url = link:match("^url:(.+)$")
+        if url then
+            -- Einen Browser kann ein Addon nicht öffnen.
+            U:ShowCopyBox(L["Copy link"], url, 560, 140)
+        elseif link:match("^item:") then
+            if IsModifiedClick() then
+                ownModifiedClick(text)
+            else
+                local item = itemsIn(text)[1]
+                if item then M:SearchAH(item) end
+            end
+        else
+            pcall(SetItemRef, link, text, button)
+        end
+    end)
+end
+
 function M:Build()
     if self.frame then return self.frame end
 
@@ -462,7 +506,7 @@ function M:Build()
 
     local titleBox = CreateFrame("EditBox", nil, f)
     titleBox:SetPoint("TOPLEFT", left, -50)
-    titleBox:SetPoint("TOPRIGHT", -112, -50)
+    titleBox:SetPoint("TOPRIGHT", -206, -50)
     titleBox:SetHeight(22)
     titleBox:SetAutoFocus(false)
     titleBox:SetFontObject(ChatFontNormal)
@@ -478,6 +522,7 @@ function M:Build()
             note.title = self:GetText()
             note.updated = time()
             M:RefreshList()
+            ns.Pins:Schedule()
         end
     end)
     titleBox:SetScript("OnEnterPressed", function() f.edit:SetFocus() end)
@@ -492,6 +537,15 @@ function M:Build()
     mode:ClearAllPoints()
     mode:SetPoint("TOPRIGHT", -18, -50)
     f.modeButton = mode
+
+    -- Auf dem Bildschirm anheften. Schreibt nur "anheften: ja" in den
+    -- Kopfblock der Notiz - dort lässt sich alles Weitere einstellen.
+    local pin = W:Button(f, { label = L["Pin"], width = 86, height = 22,
+                              tooltip = L["Show this note on screen, outside this window.\nSettings go into the block at the top of the note:\n\npin: yes / no\nwidth: 300\nheight: 200\nopacity: 70\nscale: 100\nlock: yes\ntitle: no\ncombat: hide"],
+                              onClick = function() M:TogglePin() end })
+    pin:ClearAllPoints()
+    pin:SetPoint("TOPRIGHT", -110, -50)
+    f.pinButton = pin
 
     -- Markdown-Knöpfe, nur beim Bearbeiten. Das Textfeld rückt dafür
     -- eine Zeile nach unten; die Ansicht braucht sie nicht.
@@ -551,42 +605,7 @@ function M:Build()
     view.content = content
     view:Hide()
 
-    content:SetScript("OnHyperlinkEnter", function(self, link)
-        view.overLink = true
-        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-        local url = link:match("^url:(.+)$")
-        if url then
-            GameTooltip:AddLine(url, 1, 1, 1, true)
-            GameTooltip:AddLine(L["Click: copy address"], 0.48, 0.63, 0.97)
-        else
-            pcall(GameTooltip.SetHyperlink, GameTooltip, link)
-            if link:match("^item:") then
-                GameTooltip:AddLine(" ")
-                GameTooltip:AddLine(L["Click: search the Auction House"], 0.48, 0.63, 0.97)
-            end
-        end
-        GameTooltip:Show()
-    end)
-    content:SetScript("OnHyperlinkLeave", function()
-        view.overLink = false
-        GameTooltip:Hide()
-    end)
-    content:SetScript("OnHyperlinkClick", function(_, link, text, button)
-        local url = link:match("^url:(.+)$")
-        if url then
-            -- Einen Browser kann ein Addon nicht öffnen.
-            U:ShowCopyBox(L["Copy link"], url, 560, 140)
-        elseif link:match("^item:") then
-            if IsModifiedClick() then
-                ownModifiedClick(text)
-            else
-                local item = itemsIn(text)[1]
-                if item then M:SearchAH(item) end
-            end
-        else
-            pcall(SetItemRef, link, text, button)
-        end
-    end)
+    self:LinkHandlers(content, view)
 
     -- Doppelklick in die Ansicht (nicht auf einen Link) öffnet das
     -- Textfeld. Ein einfacher Klick nicht: wer liest, klickt auch mal
@@ -687,6 +706,8 @@ function M:SaveText()
     note.updated = time()
     self:RefreshItems()
     self:RefreshList()
+    self:RefreshPinButton()
+    ns.Pins:Schedule()
 end
 
 -- Lese-Ansicht neu zeichnen. Die Scrollstelle bleibt, damit ein
@@ -730,6 +751,38 @@ function M:ToggleCheck(line)
     note.updated = time()
     self.frame.edit:SetText(note.text)
     self:RenderView()
+    ns.Pins:Update()
+end
+
+-- Eine Notiz wurde außerhalb des Fensters geändert (angeheftete Notiz:
+-- Checkbox abgehakt, gelöst). Ist sie gerade offen, nachziehen.
+function M:NoteChanged(note)
+    local f = self.frame
+    if not f or note ~= self:Current() then return end
+    f.edit:SetText(note.text or "")
+    if self.mode == "read" then self:RenderView() end
+    self:RefreshList()
+    self:RefreshPinButton()
+end
+
+function M:RefreshPinButton()
+    local f, note = self.frame, self:Current()
+    if not f then return end
+    local meta = note and ns.Markdown.Meta(note.text)
+    local pinned = meta and ns.Markdown.Bool(meta.pin, false)
+    f.pinButton.label:SetText(pinned and L["Unpin"] or L["Pin"])
+end
+
+-- Anheften umschalten: "anheften: ja/nein" im Kopfblock der Notiz.
+function M:TogglePin()
+    local note = self:Current()
+    if not note then return end
+    local meta = ns.Markdown.Meta(note.text)
+    local pinned = meta and ns.Markdown.Bool(meta.pin, false)
+    note.text = ns.Markdown.SetPin(note.text, not pinned, GetLocale() == "deDE")
+    note.updated = time()
+    self:NoteChanged(note)
+    ns.Pins:Update()
 end
 
 function M:RefreshList()
@@ -985,6 +1038,7 @@ function M:Refresh()
 
     self:RefreshList()
     self:RefreshItems()
+    self:RefreshPinButton()
 end
 
 -- anchor: optional ein Fenster, neben dem die Notizen erscheinen sollen.

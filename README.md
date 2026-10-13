@@ -16,6 +16,7 @@
   - Shift-click any item while the window is open
   - Or use **+ Item**: type a name (bags and equipment), an item ID or paste a Wowhead link
   - All items of a note appear as icons below it – click one to **search it at the Auction House**
+- **Pin notes to the screen** – show any note as a small Markdown window right on your UI, with clickable checklists; set it up inside the note itself (see below)
 - **Auction House button** – open your notes right next to the Auction House
 - **Resizable window** – size and position are remembered
 - **Minimap button** – left-click opens, right-click creates a new note, drag to move
@@ -30,6 +31,33 @@
 | `/notiz` or `/marknotes` | Open / close |
 | `/notiz new` | New note |
 | `/notiz minimap` | Show / hide the minimap button |
+
+## Pinned notes
+
+Click **Pin** in the window (or write the block yourself). The settings live at the very top of the note:
+
+```
+---
+pin: yes
+width: 300
+opacity: 70
+---
+# Shopping list
+- [ ] Flasks
+```
+
+| Setting | Values | |
+|---|---|---|
+| `pin` | `yes` / `no` | show the note on screen |
+| `width` | 150–1000 | width in pixels (default 300) |
+| `height` | 60–1200 | fixed height; without it the window fits the text (up to 500) – scroll with the mouse wheel |
+| `opacity` | 0–100 | background opacity in percent (default 70) |
+| `scale` | 50–200 | size in percent (default 100) |
+| `lock` | `yes` / `no` | can't be moved by accident |
+| `title` | `yes` / `no` | show the title bar (default yes) |
+| `combat` | `hide` / `show` | hide in combat |
+
+Drag the window to move it, double-click the title bar to open the note, click **×** to unpin. Checkboxes can be ticked right on screen. Several notes can be pinned at once. German keys (`anheften`, `breite`, …) work too.
 
 ## Good to know
 
@@ -61,6 +89,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
   - Shift-Klick auf einen Gegenstand, solange das Fenster offen ist
   - Oder **+ Gegenstand**: Name (Taschen und Ausrüstung), Item-ID oder Wowhead-Link eingeben
   - Alle Gegenstände einer Notiz stehen als Symbole darunter – ein Klick **sucht im Auktionshaus**
+- **Notizen anheften** – jede Notiz als kleines Markdown-Fenster direkt auf dem Bildschirm, Checklisten per Klick abhakbar; eingestellt wird in der Notiz selbst (siehe unten)
 - **Knopf am Auktionshaus** – Notizen direkt daneben öffnen
 - **Fenstergröße veränderbar** – Größe und Position werden gemerkt
 - **Minimap-Knopf** – Linksklick öffnet, Rechtsklick legt eine neue Notiz an, Ziehen verschiebt
@@ -75,6 +104,33 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
 | `/notiz` oder `/marknotes` | Öffnen / schließen |
 | `/notiz neu` | Neue Notiz |
 | `/notiz minimap` | Minimap-Knopf ein- / ausblenden |
+
+## Angeheftete Notizen
+
+Im Fenster auf **Anheften** klicken (oder den Block selbst schreiben). Die Einstellungen stehen ganz oben in der Notiz:
+
+```
+---
+anheften: ja
+breite: 300
+deckkraft: 70
+---
+# Einkaufsliste
+- [ ] Fläschchen
+```
+
+| Einstellung | Werte | |
+|---|---|---|
+| `anheften` | `ja` / `nein` | Notiz auf dem Bildschirm zeigen |
+| `breite` | 150–1000 | Breite in Pixeln (Standard 300) |
+| `höhe` | 60–1200 | feste Höhe; ohne passt sich das Fenster dem Text an (bis 500) – scrollen mit dem Mausrad |
+| `deckkraft` | 0–100 | Deckkraft des Hintergrunds in Prozent (Standard 70) |
+| `größe` | 50–200 | Größe in Prozent (Standard 100) |
+| `fixieren` | `ja` / `nein` | lässt sich nicht versehentlich verschieben |
+| `titel` | `ja` / `nein` | Titelzeile zeigen (Standard ja) |
+| `kampf` | `ausblenden` / `zeigen` | im Kampf ausblenden |
+
+Fenster ziehen zum Verschieben, Doppelklick auf die Titelzeile öffnet die Notiz, **×** löst sie. Checkboxen lassen sich direkt auf dem Bildschirm abhaken. Mehrere Notizen können gleichzeitig angeheftet sein. Englische Schlüssel (`pin`, `width`, …) gehen auch.
 
 ## Gut zu wissen
 
