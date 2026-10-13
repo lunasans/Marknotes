@@ -50,6 +50,9 @@ L["Unlock"]                = "Fixierung lösen"
 L["Sets the note to \"lock: yes\" - it can no longer be dragged."] =
     "Setzt die Notiz auf \"fixieren: ja\" - sie lässt sich nicht mehr verschieben."
 L["Sets the note to \"lock: no\"."] = "Setzt die Notiz auf \"fixieren: nein\"."
+L["Drag: resize"]          = "Ziehen: Größe ändern"
+L["Double-click: height fits the text again."] =
+    "Doppelklick: Höhe passt sich wieder dem Text an."
 
 -- Teilen
 L["Share"]                 = "Teilen"
