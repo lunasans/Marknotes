@@ -145,6 +145,12 @@ local function lines(text)
     return out
 end
 
+-- Nur A-Z klein machen. string.lower richtet sich nach dem Gebietsschema
+-- und verändert dann die Bytes von Umlauten ("höhe" würde nicht erkannt).
+local function lower(s)
+    return (s:gsub("[A-Z]", string.lower))
+end
+
 -- Kopfblock lesen. Liefert die Einstellungen (Schlüssel auf Englisch,
 -- Werte roh und klein geschrieben), die Zeile mit dem schließenden ---
 -- und je Einstellung die Zeile, in der sie steht. Ohne Kopfblock nil.
@@ -162,9 +168,9 @@ function MD.Meta(text)
         if line:match("%S") then
             local k, v = line:match("^%s*([^:%s]+)%s*:%s*(.-)%s*$")
             if not k then return nil end
-            local key = KEYS[k:lower()]
+            local key = KEYS[lower(k)]
             if key then
-                meta[key], at[key], known = v:lower(), i, true
+                meta[key], at[key], known = lower(v), i, true
             end
         end
     end
@@ -196,7 +202,7 @@ function MD.SetPin(text, on, german)
     if meta and at.pin then
         local line = ls[at.pin]
         local k = line:match("^%s*([^:%s]+)")
-        local de = k:lower() == "anheften"
+        local de = lower(k) == "anheften"
         ls[at.pin] = k .. ": " .. (on and (de and "ja" or "yes") or (de and "nein" or "no"))
     elseif meta then
         table.insert(ls, close, (german and "anheften: " or "pin: ")
