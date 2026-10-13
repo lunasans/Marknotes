@@ -1,5 +1,10 @@
 package-as: Marknotes
 
+# Text für GitHub-Release, CurseForge und Wago.
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 # Nur die Addon-Dateien gehen ins Paket. Punktdateien (.github,
 # .gitignore, .pkgmeta) lässt der Packager von sich aus weg.
 ignore:

@@ -1,6 +1,6 @@
 # Marknotes
 
-**In-game notes with Markdown.** Write shopping lists, raid plans, farming routes or guides – with headings, tables, checklists, links and real item links.
+**In-game notes with Markdown.** Write shopping lists, raid plans, farming routes or guides – with headings, tables, checklists, raid markers, waypoints and real item links. Pin a note right onto your screen or share it live with your group.
 
 ## Features
 
@@ -22,7 +22,7 @@
 - **Share with your group or raid** – send a note to everyone in your group who has Marknotes; they're asked once, after that **every change you make updates their copy automatically** (their own ticks stay)
 - **Waypoints** – write `/way 47.5 62.3 Banker`, `/way #2112 47.5 62.3` or `/way Valdrakken 47.5 62.3` (TomTom style, as found in guides; `/tway` works too). In the preview it becomes a link: click it to set the waypoint – in **TomTom** if installed, otherwise as the game's own map pin. Shift-clicking a map pin on the world map inserts it as well, and **+ Position** inserts where you are standing right now.
 - **Auction House button** – open your notes right next to the Auction House
-- **Resizable window** – size and position are remembered
+- **Resizable window** – size and position are remembered; the version is shown below the note list
 - **Minimap button** – left-click opens, right-click creates a new note, drag to move
 - Notes are shared across all your characters
 - English and German
@@ -80,7 +80,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
 
 # Marknotes (Deutsch)
 
-**Notizen im Spiel mit Markdown.** Einkaufslisten, Raid-Pläne, Farmrouten oder Guides – mit Überschriften, Tabellen, Checklisten, Links und echten Gegenstandslinks.
+**Notizen im Spiel mit Markdown.** Einkaufslisten, Raid-Pläne, Farmrouten oder Guides – mit Überschriften, Tabellen, Checklisten, Zielmarkierungen, Wegpunkten und echten Gegenstandslinks. Eine Notiz direkt auf den Bildschirm heften oder live mit der Gruppe teilen.
 
 ## Funktionen
 
@@ -102,7 +102,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
 - **Mit Gruppe oder Schlachtzug teilen** – eine Notiz an alle in der Gruppe senden, die Marknotes haben; sie werden einmal gefragt, danach **aktualisiert sich ihre Kopie bei jeder Änderung automatisch** (eigene Haken bleiben)
 - **Wegpunkte** – `/way 47.5 62.3 Bankier`, `/way #2112 47.5 62.3` oder `/way Valdrakken 47.5 62.3` schreiben (TomTom-Schreibweise wie in Guides, auch `/tway`). In der Ansicht wird daraus ein Link: ein Klick setzt den Wegpunkt – in **TomTom**, wenn installiert, sonst als Kartenpin des Spiels. Shift-Klick auf einen Pin der Weltkarte fügt ihn ebenfalls ein, **+ Position** die Stelle, an der du gerade stehst.
 - **Knopf am Auktionshaus** – Notizen direkt daneben öffnen
-- **Fenstergröße veränderbar** – Größe und Position werden gemerkt
+- **Fenstergröße veränderbar** – Größe und Position werden gemerkt; die Version steht unter der Notizliste
 - **Minimap-Knopf** – Linksklick öffnet, Rechtsklick legt eine neue Notiz an, Ziehen verschiebt
 - Notizen gelten für alle deine Charaktere
 - Deutsch und Englisch
