@@ -39,6 +39,64 @@ L["Search term entered - press Enter to search."] =
 L["Open Marknotes next to the Auction House."] =
     "Marknotes neben dem Auktionshaus öffnen."
 
+-- Anheften
+L["Pin"]                   = "Anheften"
+L["Unpin"]                 = "Lösen"
+L["Show this note on screen, outside this window.\nSettings go into the block at the top of the note:\n\npin: yes / no\nwidth: 300\nheight: 200\nopacity: 70\nscale: 100\nlock: yes\ntitle: no\ncombat: hide"] =
+    "Diese Notiz auf dem Bildschirm zeigen, auch ohne dieses Fenster.\nEingestellt wird im Block ganz oben in der Notiz:\n\nanheften: ja / nein\nbreite: 300\nhöhe: 200\ndeckkraft: 70\ngröße: 100\nfixieren: ja\ntitel: nein\nkampf: ausblenden"
+L["Sets the note back to \"pin: no\"."] = "Setzt die Notiz auf \"anheften: nein\"."
+L["Lock"]                  = "Fixieren"
+L["Unlock"]                = "Fixierung lösen"
+L["Sets the note to \"lock: yes\" - it can no longer be dragged."] =
+    "Setzt die Notiz auf \"fixieren: ja\" - sie lässt sich nicht mehr verschieben."
+L["Sets the note to \"lock: no\"."] = "Setzt die Notiz auf \"fixieren: nein\"."
+L["Drag: resize"]          = "Ziehen: Größe ändern"
+L["Double-click: height fits the text again."] =
+    "Doppelklick: Höhe passt sich wieder dem Text an."
+
+-- Teilen
+L["Share"]                 = "Teilen"
+L["Note"]                  = "Notiz"
+L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added.\nAfter that, every change is sent automatically."] =
+    "Diese Notiz an die Gruppe oder den Schlachtzug senden.\nDie anderen brauchen Marknotes auch und werden vorher gefragt.\nDanach geht jede Änderung automatisch mit."
+L["Shared"]                = "Geteilt"
+L["Send again"]            = "Erneut senden"
+L["Stop sharing"]          = "Teilen beenden"
+L["This note is shared - changes go to your group automatically."] =
+    "Diese Notiz ist geteilt - Änderungen gehen automatisch an die Gruppe."
+L["Note is no longer shared. The others keep their copy."] =
+    "Notiz wird nicht mehr geteilt. Die anderen behalten ihre Kopie."
+L["You are not in a group."] = "Du bist in keiner Gruppe."
+L["This note is too long to share."] = "Diese Notiz ist zu lang zum Teilen."
+L["Sending note \"%s\" - this takes a few seconds."] =
+    "Notiz \"%s\" wird gesendet - das dauert ein paar Sekunden."
+L["Note \"%s\" shared with your group. Changes are sent automatically."] =
+    "Notiz \"%s\" mit der Gruppe geteilt. Änderungen gehen automatisch mit."
+L["Sharing failed - addon messages are blocked right now (e.g. during a boss fight)."] =
+    "Teilen fehlgeschlagen - Addon-Nachrichten sind gerade gesperrt (z. B. im Bosskampf)."
+L["%s shares the note \"%s\" with you.\nAdd it to your notes?"] =
+    "%s teilt die Notiz \"%s\" mit dir.\nZu deinen Notizen hinzufügen?"
+L["Note \"%s\" from %s added. It updates automatically when %s changes it."] =
+    "Notiz \"%s\" von %s hinzugefügt. Sie aktualisiert sich, wenn %s sie ändert."
+L["Note \"%s\" from %s updated."] = "Notiz \"%s\" von %s aktualisiert."
+-- Wegpunkte
+L["Waypoint"]              = "Wegpunkt"
+L["current zone"]          = "aktuelle Zone"
+L["Map pin"]               = "Kartenmarkierung"
+L["Click: set TomTom waypoint"] = "Klick: Wegpunkt in TomTom setzen"
+L["Click: set map pin"]    = "Klick: Kartenpin setzen"
+L["Click: open the map and set the pin"] = "Klick: Karte öffnen und Pin setzen"
+L["Zone |cffffff00%s|r not found - use the map ID instead: /way #ID x y."] =
+    "Zone |cffffff00%s|r nicht gefunden - mit Karten-ID angeben: /way #ID x y."
+L["There is no map for your current position."] = "Für die aktuelle Position gibt es keine Karte."
+L["WoW does not allow a map pin on %s."] = "Auf der Karte %s erlaubt WoW keinen Kartenpin."
+L["Map pin set: |cffffd100%s|r (%s %s, %s)"] = "Kartenpin gesetzt: |cffffd100%s|r (%s %s, %s)"
+L["+ Position"]            = "+ Position"
+L["Insert your current position as a waypoint (/way #map x y).\nWoW does not reveal your position inside instances."] =
+    "Aktuelle Position als Wegpunkt einfügen (/way #Karte x y).\nIn Instanzen gibt WoW keine Position heraus."
+L["Your position is not available here (e.g. inside instances)."] =
+    "Deine Position ist hier nicht verfügbar (z. B. in Instanzen)."
+
 -- Links
 L["Click: copy address"]   = "Klick: Adresse kopieren"
 L["Copy link"]             = "Link kopieren"
@@ -87,6 +145,6 @@ L["Drag: move button"]       = "Ziehen: Knopf verschieben"
 L["Minimap button hidden - show it again with |cffffff00/notiz minimap|r."] =
     "Minimap-Knopf ausgeblendet - wieder einblenden mit |cffffff00/notiz minimap|r."
 L["Minimap button shown."]   = "Minimap-Knopf eingeblendet."
-L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz minimap|r show/hide button."] =
-    "Befehle: |cffffff00/notiz|r öffnen, |cffffff00/notiz neu|r neue Notiz, |cffffff00/notiz minimap|r Knopf ein/aus."
+L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz share|r share with group, |cffffff00/notiz minimap|r show/hide button."] =
+    "Befehle: |cffffff00/notiz|r öffnen, |cffffff00/notiz neu|r neue Notiz, |cffffff00/notiz teilen|r mit der Gruppe teilen, |cffffff00/notiz minimap|r Knopf ein/aus."
 L["%d notes imported from Luna Sans UI."] = "%d Notizen aus Luna Sans UI übernommen."

@@ -37,6 +37,81 @@ local function store()
     return ns.db.notes
 end
 
+-- ---------------------------------------------------------------- Wegpunkte
+
+local function mapName(id)
+    local info = id and C_Map.GetMapInfo(id)
+    return info and info.name or nil
+end
+if ns.Markdown then ns.Markdown.MapName = mapName end
+
+-- Zonenname -> Karten-ID. Eine Abfrage dafür gibt es nicht, also wird
+-- einmalig über alle IDs gelaufen. Namen sind nicht eindeutig (Dalaran,
+-- Orgrimmar ...): Zonen gehen vor Kontinenten und Kleinstkarten, bei
+-- Gleichstand gewinnt die neuere Karte (höhere ID).
+local RANK = { [3] = 3, [2] = 2, [5] = 1, [6] = 1, [4] = 0 }   -- Enum.UIMapType
+local zoneIndex
+
+local function mapByName(name)
+    if not zoneIndex then
+        zoneIndex = {}
+        for id = 1, 4000 do
+            local info = C_Map.GetMapInfo(id)
+            if info and info.name and info.name ~= "" then
+                local key, rank = info.name:lower(), RANK[info.mapType] or 0
+                local prev = zoneIndex[key]
+                if not prev or rank > prev.rank or (rank == prev.rank and id > prev.id) then
+                    zoneIndex[key] = { id = id, rank = rank }
+                end
+            end
+        end
+    end
+    local hit = zoneIndex[(name or ""):lower()]
+    return hit and hit.id or nil
+end
+
+-- Wegpunkt setzen: mit TomTom dort (beliebig viele, mit Pfeil), sonst
+-- als Blizzards Kartenpin - davon gibt es nur einen gleichzeitig.
+function M:SetWaypoint(w)
+    local mapID = w.mapID
+    if not mapID and w.zone then
+        mapID = mapByName(w.zone)
+        if not mapID then
+            ns:Print(L["Zone |cffffff00%s|r not found - use the map ID instead: /way #ID x y."], w.zone)
+            return
+        end
+    end
+    mapID = mapID or C_Map.GetBestMapForUnit("player")
+    if not mapID then
+        ns:Print(L["There is no map for your current position."])
+        return
+    end
+
+    local x, y = w.x / 100, w.y / 100
+    local where = mapName(mapID) or ("#" .. mapID)
+    local title = w.title ~= "" and w.title or where
+
+    local tomtom = _G.TomTom
+    if tomtom and tomtom.AddWaypoint then
+        local ok = pcall(tomtom.AddWaypoint, tomtom, mapID, x, y,
+                         { title = title, from = "Marknotes", persistent = false })
+        if ok then
+            ns:Print("TomTom: |cffffd100%s|r (%s %s, %s)", title, where, w.x, w.y)
+            return
+        end
+    end
+
+    if C_Map.CanSetUserWaypointOnMap and not C_Map.CanSetUserWaypointOnMap(mapID) then
+        ns:Print(L["WoW does not allow a map pin on %s."], where)
+        return
+    end
+    C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x, y))
+    if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+    end
+    ns:Print(L["Map pin set: |cffffd100%s|r (%s %s, %s)"], title, where, w.x, w.y)
+end
+
 function M:Current()
     local s = store()
     return s.list[s.current]
@@ -44,12 +119,14 @@ end
 
 local function labelFor(note, index)
     if note.title and note.title:match("%S") then return note.title end
-    -- Sonst die erste Zeile, ohne Links und Farbcodes.
-    local first = (note.text or ""):match("^[^\n]*") or ""
+    -- Sonst die erste Zeile, ohne Einstellungen, Links und Farbcodes.
+    local first = ns.Markdown.Body(note.text):match("^%s*([^\n]*)") or ""
     first = U:StripFormatting(first):gsub("^%s+", "")
     if first ~= "" then return first end
     return L["Note %d"]:format(index)
 end
+
+M.Label = labelFor
 
 local function isEmpty(note)
     return note and not (note.title or ""):match("%S")
@@ -74,6 +151,7 @@ function M:Delete()
     table.remove(s.list, s.current)
     s.current = math.max(1, math.min(s.current, #s.list))
     self:Refresh()
+    ns.Pins:Update()
 end
 
 function M:Select(index)
@@ -486,6 +564,60 @@ local function skinInput(box)
     return back
 end
 
+-- Links in einer gerenderten Ansicht: Tooltip, Adressen kopieren,
+-- Wegpunkte setzen, Gegenstände im Auktionshaus suchen. Auch für angeheftete Notizen.
+function M:LinkHandlers(content, view)
+    content:SetScript("OnHyperlinkEnter", function(self, link)
+        view.overLink = true
+        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+        local url = link:match("^url:(.+)$")
+        local way = ns.Markdown.ParseWayLink(link)
+        if url then
+            GameTooltip:AddLine(url, 1, 1, 1, true)
+            GameTooltip:AddLine(L["Click: copy address"], 0.48, 0.63, 0.97)
+        elseif way then
+            local where = way.zone or (way.mapID and mapName(way.mapID)) or L["current zone"]
+            GameTooltip:AddLine(way.title ~= "" and way.title or L["Waypoint"], 1, 0.82, 0)
+            GameTooltip:AddLine(("%s  %s, %s"):format(where, way.x, way.y), 1, 1, 1)
+            GameTooltip:AddLine(_G.TomTom and L["Click: set TomTom waypoint"]
+                                          or L["Click: set map pin"], 0.48, 0.63, 0.97)
+        elseif link:match("^worldmap:") then
+            GameTooltip:AddLine(L["Map pin"], 1, 0.82, 0)
+            GameTooltip:AddLine(L["Click: open the map and set the pin"], 0.48, 0.63, 0.97)
+        else
+            pcall(GameTooltip.SetHyperlink, GameTooltip, link)
+            if link:match("^item:") then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(L["Click: search the Auction House"], 0.48, 0.63, 0.97)
+            end
+        end
+        GameTooltip:Show()
+    end)
+    content:SetScript("OnHyperlinkLeave", function()
+        view.overLink = false
+        GameTooltip:Hide()
+    end)
+    content:SetScript("OnHyperlinkClick", function(_, link, text, button)
+        local url = link:match("^url:(.+)$")
+        local way = ns.Markdown.ParseWayLink(link)
+        if url then
+            -- Einen Browser kann ein Addon nicht öffnen.
+            U:ShowCopyBox(L["Copy link"], url, 560, 140)
+        elseif way then
+            M:SetWaypoint(way)
+        elseif link:match("^item:") then
+            if IsModifiedClick() then
+                ownModifiedClick(text)
+            else
+                local item = itemsIn(text)[1]
+                if item then M:SearchAH(item) end
+            end
+        else
+            pcall(SetItemRef, link, text, button)
+        end
+    end)
+end
+
 function M:Build()
     if self.frame then return self.frame end
 
@@ -529,7 +661,7 @@ function M:Build()
 
     local titleBox = CreateFrame("EditBox", nil, f)
     titleBox:SetPoint("TOPLEFT", left, -50)
-    titleBox:SetPoint("TOPRIGHT", -112, -50)
+    titleBox:SetPoint("TOPRIGHT", -298, -50)
     titleBox:SetHeight(22)
     titleBox:SetAutoFocus(false)
     titleBox:SetFontObject(ChatFontNormal)
@@ -545,6 +677,8 @@ function M:Build()
             note.title = self:GetText()
             note.updated = time()
             M:RefreshList()
+            ns.Pins:Schedule()
+            ns.Share:Changed(note)
         end
     end)
     titleBox:SetScript("OnEnterPressed", function() f.edit:SetFocus() end)
@@ -559,6 +693,23 @@ function M:Build()
     mode:ClearAllPoints()
     mode:SetPoint("TOPRIGHT", -18, -50)
     f.modeButton = mode
+
+    -- Auf dem Bildschirm anheften. Schreibt nur "anheften: ja" in den
+    -- Kopfblock der Notiz - dort lässt sich alles Weitere einstellen.
+    local pin = W:Button(f, { label = L["Pin"], width = 86, height = 22,
+                              tooltip = L["Show this note on screen, outside this window.\nSettings go into the block at the top of the note:\n\npin: yes / no\nwidth: 300\nheight: 200\nopacity: 70\nscale: 100\nlock: yes\ntitle: no\ncombat: hide"],
+                              onClick = function() M:TogglePin() end })
+    pin:ClearAllPoints()
+    pin:SetPoint("TOPRIGHT", -110, -50)
+    f.pinButton = pin
+
+    -- Mit der Gruppe / dem Schlachtzug teilen (Share.lua).
+    local share = W:Button(f, { label = L["Share"], width = 86, height = 22,
+                                tooltip = L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added.\nAfter that, every change is sent automatically."],
+                                onClick = function() M:Share() end })
+    share:ClearAllPoints()
+    share:SetPoint("TOPRIGHT", -202, -50)
+    f.shareButton = share
 
     -- Markdown-Knöpfe, nur beim Bearbeiten. Das Textfeld rückt dafür
     -- eine Zeile nach unten; die Ansicht braucht sie nicht.
@@ -618,42 +769,7 @@ function M:Build()
     view.content = content
     view:Hide()
 
-    content:SetScript("OnHyperlinkEnter", function(self, link)
-        view.overLink = true
-        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-        local url = link:match("^url:(.+)$")
-        if url then
-            GameTooltip:AddLine(url, 1, 1, 1, true)
-            GameTooltip:AddLine(L["Click: copy address"], 0.48, 0.63, 0.97)
-        else
-            pcall(GameTooltip.SetHyperlink, GameTooltip, link)
-            if link:match("^item:") then
-                GameTooltip:AddLine(" ")
-                GameTooltip:AddLine(L["Click: search the Auction House"], 0.48, 0.63, 0.97)
-            end
-        end
-        GameTooltip:Show()
-    end)
-    content:SetScript("OnHyperlinkLeave", function()
-        view.overLink = false
-        GameTooltip:Hide()
-    end)
-    content:SetScript("OnHyperlinkClick", function(_, link, text, button)
-        local url = link:match("^url:(.+)$")
-        if url then
-            -- Einen Browser kann ein Addon nicht öffnen.
-            U:ShowCopyBox(L["Copy link"], url, 560, 140)
-        elseif link:match("^item:") then
-            if IsModifiedClick() then
-                ownModifiedClick(text)
-            else
-                local item = itemsIn(text)[1]
-                if item then M:SearchAH(item) end
-            end
-        else
-            pcall(SetItemRef, link, text, button)
-        end
-    end)
+    self:LinkHandlers(content, view)
 
     -- Doppelklick in die Ansicht (nicht auf einen Link) öffnet das
     -- Textfeld. Ein einfacher Klick nicht: wer liest, klickt auch mal
@@ -698,6 +814,13 @@ function M:Build()
     add:SetWidth(math.ceil(add.label:GetStringWidth()) + 18)
     add:ClearAllPoints()
     add:SetPoint("TOPRIGHT", 0, 3)
+
+    local here = W:Button(items, { label = L["+ Position"], width = 80, height = 18,
+                                   tooltip = L["Insert your current position as a waypoint (/way #map x y).\nWoW does not reveal your position inside instances."],
+                                   onClick = function() M:InsertPosition() end })
+    here:SetWidth(math.ceil(here.label:GetStringWidth()) + 18)
+    here:ClearAllPoints()
+    here:SetPoint("RIGHT", add, "LEFT", -4, 0)
 
     -- Größe ändern und Stelle merken.
     f:SetScript("OnDragStop", function(self)
@@ -754,6 +877,9 @@ function M:SaveText()
     note.updated = time()
     self:RefreshItems()
     self:RefreshList()
+    self:RefreshPinButton()
+    ns.Pins:Schedule()
+    ns.Share:Changed(note)
 end
 
 -- Lese-Ansicht neu zeichnen. Die Scrollstelle bleibt, damit ein
@@ -797,6 +923,54 @@ function M:ToggleCheck(line)
     note.updated = time()
     self.frame.edit:SetText(note.text)
     self:RenderView()
+    ns.Pins:Update()
+    ns.Share:Changed(note)
+end
+
+-- Eine Notiz wurde außerhalb des Fensters geändert (angeheftete Notiz:
+-- Checkbox abgehakt, gelöst). Ist sie gerade offen, nachziehen.
+function M:NoteChanged(note)
+    local f = self.frame
+    if not f or note ~= self:Current() then return end
+    f.edit:SetText(note.text or "")
+    if self.mode == "read" then self:RenderView() end
+    self:RefreshList()
+    self:RefreshPinButton()
+end
+
+function M:RefreshPinButton()
+    local f, note = self.frame, self:Current()
+    if not f then return end
+    local meta = note and ns.Markdown.Meta(note.text)
+    local pinned = meta and ns.Markdown.Bool(meta.pin, false)
+    f.pinButton.label:SetText(pinned and L["Unpin"] or L["Pin"])
+    f.shareButton.label:SetText(ns.Share:IsShared(note) and L["Shared"] or L["Share"])
+end
+
+-- Teilen. Ist die Notiz schon geteilt, fragen: noch einmal senden
+-- (für alle, die später dazugekommen sind) oder Teilen beenden.
+function M:Share()
+    local note = self:Current()
+    if not note or not (note.text or ""):match("%S") then return end
+    if ns.Share:IsShared(note) then
+        StaticPopup_Show("MARKNOTES_SHARED", nil, nil, note)
+    else
+        ns.Share:Send(note)
+        self:RefreshPinButton()
+    end
+end
+
+-- Anheften umschalten: "anheften: ja/nein" im Kopfblock der Notiz.
+function M:TogglePin()
+    local note = self:Current()
+    if not note then return end
+    local meta = ns.Markdown.Meta(note.text)
+    local pinned = meta and ns.Markdown.Bool(meta.pin, false)
+    note.text = ns.Markdown.SetPin(note.text, not pinned, GetLocale() == "deDE")
+    note.updated = time()
+    self:NoteChanged(note)
+    ns.Pins:Update()
+    ns.Share:Changed(note)
 end
 
 function M:RefreshList()
@@ -960,6 +1134,37 @@ local function findItem(query, done)
 end
 M.FindItem = findItem
 
+-- Zahl, mit der sich rechnen lässt (ab 12.0 können Werte gesperrt sein).
+local function usable(v)
+    return type(v) == "number" and not (issecretvalue and issecretvalue(v))
+end
+
+-- Eigene Position als "/way #Karte x y Unterzone" auf einer eigenen
+-- Zeile - /way liest bis zum Zeilenende, Text dahinter würde sonst zum
+-- Titel. Die Unterzone ist markiert und lässt sich gleich überschreiben.
+function M:InsertPosition()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local ok, pos = pcall(C_Map.GetPlayerMapPosition, mapID or 0, "player")
+    local x, y
+    if ok and pos then x, y = pos:GetXY() end
+    if not mapID or not usable(x) or not usable(y) or (x == 0 and y == 0) then
+        ns:Print(L["Your position is not available here (e.g. inside instances)."])
+        return
+    end
+
+    local f = self:Build()
+    if not f:IsShown() then self:Show() end
+    if self.mode ~= "edit" then
+        self:SetMode("edit")
+        f.edit:SetCursorPosition(#f.edit:GetText())
+    end
+
+    local title = GetSubZoneText and GetSubZoneText() or ""
+    local line = ("/way #%d %.1f %.1f"):format(mapID, x * 100, y * 100)
+    if title ~= "" then line = line .. " " .. title end
+    self:InsertBlock(line, #line - #title, #title)
+end
+
 -- Link an der Stelle einfügen, an der der Cursor vor dem Eingabefenster
 -- stand - ohne Cursor (aus der Ansicht) ans Ende.
 function M:InsertItem(link)
@@ -1052,6 +1257,7 @@ function M:Refresh()
 
     self:RefreshList()
     self:RefreshItems()
+    self:RefreshPinButton()
 end
 
 -- anchor: optional ein Fenster, neben dem die Notizen erscheinen sollen.
@@ -1086,6 +1292,21 @@ StaticPopupDialogs["MARKNOTES_DELETE"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["MARKNOTES_SHARED"] = {
+    text         = L["This note is shared - changes go to your group automatically."],
+    button1      = L["Send again"],
+    button2      = CANCEL,
+    button3      = L["Stop sharing"],
+    OnAccept     = function(_, note) ns.Share:Send(note) end,
+    OnAlt        = function(_, note)
+        ns.Share:Stop(note)
+        M:RefreshPinButton()
+    end,
+    timeout      = 0,
+    whileDead    = true,
+    hideOnEscape = true,
+}
+
 ns:On("PLAYER_LOGIN", function()
     -- Das Auktionshaus lädt erst beim ersten Besuch.
     M:HookAuctionHouse()
@@ -1114,9 +1335,12 @@ SlashCmdList.MARKNOTES = function(msg)
     elseif cmd == "new" or cmd == "neu" then
         M:Show()
         M:New()
+    elseif cmd == "share" or cmd == "teilen" then
+        M:Show()
+        M:Share()
     elseif cmd == "minimap" then
         ns.Minimap:Toggle()
     else
-        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz minimap|r show/hide button."])
+        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz share|r share with group, |cffffff00/notiz minimap|r show/hide button."])
     end
 end
