@@ -37,6 +37,81 @@ local function store()
     return ns.db.notes
 end
 
+-- ---------------------------------------------------------------- Wegpunkte
+
+local function mapName(id)
+    local info = id and C_Map.GetMapInfo(id)
+    return info and info.name or nil
+end
+if ns.Markdown then ns.Markdown.MapName = mapName end
+
+-- Zonenname -> Karten-ID. Eine Abfrage dafür gibt es nicht, also wird
+-- einmalig über alle IDs gelaufen. Namen sind nicht eindeutig (Dalaran,
+-- Orgrimmar ...): Zonen gehen vor Kontinenten und Kleinstkarten, bei
+-- Gleichstand gewinnt die neuere Karte (höhere ID).
+local RANK = { [3] = 3, [2] = 2, [5] = 1, [6] = 1, [4] = 0 }   -- Enum.UIMapType
+local zoneIndex
+
+local function mapByName(name)
+    if not zoneIndex then
+        zoneIndex = {}
+        for id = 1, 4000 do
+            local info = C_Map.GetMapInfo(id)
+            if info and info.name and info.name ~= "" then
+                local key, rank = info.name:lower(), RANK[info.mapType] or 0
+                local prev = zoneIndex[key]
+                if not prev or rank > prev.rank or (rank == prev.rank and id > prev.id) then
+                    zoneIndex[key] = { id = id, rank = rank }
+                end
+            end
+        end
+    end
+    local hit = zoneIndex[(name or ""):lower()]
+    return hit and hit.id or nil
+end
+
+-- Wegpunkt setzen: mit TomTom dort (beliebig viele, mit Pfeil), sonst
+-- als Blizzards Kartenpin - davon gibt es nur einen gleichzeitig.
+function M:SetWaypoint(w)
+    local mapID = w.mapID
+    if not mapID and w.zone then
+        mapID = mapByName(w.zone)
+        if not mapID then
+            ns:Print(L["Zone |cffffff00%s|r not found - use the map ID instead: /way #ID x y."], w.zone)
+            return
+        end
+    end
+    mapID = mapID or C_Map.GetBestMapForUnit("player")
+    if not mapID then
+        ns:Print(L["There is no map for your current position."])
+        return
+    end
+
+    local x, y = w.x / 100, w.y / 100
+    local where = mapName(mapID) or ("#" .. mapID)
+    local title = w.title ~= "" and w.title or where
+
+    local tomtom = _G.TomTom
+    if tomtom and tomtom.AddWaypoint then
+        local ok = pcall(tomtom.AddWaypoint, tomtom, mapID, x, y,
+                         { title = title, from = "Marknotes", persistent = false })
+        if ok then
+            ns:Print("TomTom: |cffffd100%s|r (%s %s, %s)", title, where, w.x, w.y)
+            return
+        end
+    end
+
+    if C_Map.CanSetUserWaypointOnMap and not C_Map.CanSetUserWaypointOnMap(mapID) then
+        ns:Print(L["WoW does not allow a map pin on %s."], where)
+        return
+    end
+    C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x, y))
+    if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+    end
+    ns:Print(L["Map pin set: |cffffd100%s|r (%s %s, %s)"], title, where, w.x, w.y)
+end
+
 function M:Current()
     local s = store()
     return s.list[s.current]
@@ -490,15 +565,25 @@ local function skinInput(box)
 end
 
 -- Links in einer gerenderten Ansicht: Tooltip, Adressen kopieren,
--- Gegenstände im Auktionshaus suchen. Auch für angeheftete Notizen.
+-- Wegpunkte setzen, Gegenstände im Auktionshaus suchen. Auch für angeheftete Notizen.
 function M:LinkHandlers(content, view)
     content:SetScript("OnHyperlinkEnter", function(self, link)
         view.overLink = true
         GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
         local url = link:match("^url:(.+)$")
+        local way = ns.Markdown.ParseWayLink(link)
         if url then
             GameTooltip:AddLine(url, 1, 1, 1, true)
             GameTooltip:AddLine(L["Click: copy address"], 0.48, 0.63, 0.97)
+        elseif way then
+            local where = way.zone or (way.mapID and mapName(way.mapID)) or L["current zone"]
+            GameTooltip:AddLine(way.title ~= "" and way.title or L["Waypoint"], 1, 0.82, 0)
+            GameTooltip:AddLine(("%s  %s, %s"):format(where, way.x, way.y), 1, 1, 1)
+            GameTooltip:AddLine(_G.TomTom and L["Click: set TomTom waypoint"]
+                                          or L["Click: set map pin"], 0.48, 0.63, 0.97)
+        elseif link:match("^worldmap:") then
+            GameTooltip:AddLine(L["Map pin"], 1, 0.82, 0)
+            GameTooltip:AddLine(L["Click: open the map and set the pin"], 0.48, 0.63, 0.97)
         else
             pcall(GameTooltip.SetHyperlink, GameTooltip, link)
             if link:match("^item:") then
@@ -514,9 +599,12 @@ function M:LinkHandlers(content, view)
     end)
     content:SetScript("OnHyperlinkClick", function(_, link, text, button)
         local url = link:match("^url:(.+)$")
+        local way = ns.Markdown.ParseWayLink(link)
         if url then
             -- Einen Browser kann ein Addon nicht öffnen.
             U:ShowCopyBox(L["Copy link"], url, 560, 140)
+        elseif way then
+            M:SetWaypoint(way)
         elseif link:match("^item:") then
             if IsModifiedClick() then
                 ownModifiedClick(text)
@@ -726,6 +814,13 @@ function M:Build()
     add:SetWidth(math.ceil(add.label:GetStringWidth()) + 18)
     add:ClearAllPoints()
     add:SetPoint("TOPRIGHT", 0, 3)
+
+    local here = W:Button(items, { label = L["+ Position"], width = 80, height = 18,
+                                   tooltip = L["Insert your current position as a waypoint (/way #map x y).\nWoW does not reveal your position inside instances."],
+                                   onClick = function() M:InsertPosition() end })
+    here:SetWidth(math.ceil(here.label:GetStringWidth()) + 18)
+    here:ClearAllPoints()
+    here:SetPoint("RIGHT", add, "LEFT", -4, 0)
 
     -- Größe ändern und Stelle merken.
     f:SetScript("OnDragStop", function(self)
@@ -1038,6 +1133,37 @@ local function findItem(query, done)
     done(link)
 end
 M.FindItem = findItem
+
+-- Zahl, mit der sich rechnen lässt (ab 12.0 können Werte gesperrt sein).
+local function usable(v)
+    return type(v) == "number" and not (issecretvalue and issecretvalue(v))
+end
+
+-- Eigene Position als "/way #Karte x y Unterzone" auf einer eigenen
+-- Zeile - /way liest bis zum Zeilenende, Text dahinter würde sonst zum
+-- Titel. Die Unterzone ist markiert und lässt sich gleich überschreiben.
+function M:InsertPosition()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local ok, pos = pcall(C_Map.GetPlayerMapPosition, mapID or 0, "player")
+    local x, y
+    if ok and pos then x, y = pos:GetXY() end
+    if not mapID or not usable(x) or not usable(y) or (x == 0 and y == 0) then
+        ns:Print(L["Your position is not available here (e.g. inside instances)."])
+        return
+    end
+
+    local f = self:Build()
+    if not f:IsShown() then self:Show() end
+    if self.mode ~= "edit" then
+        self:SetMode("edit")
+        f.edit:SetCursorPosition(#f.edit:GetText())
+    end
+
+    local title = GetSubZoneText and GetSubZoneText() or ""
+    local line = ("/way #%d %.1f %.1f"):format(mapID, x * 100, y * 100)
+    if title ~= "" then line = line .. " " .. title end
+    self:InsertBlock(line, #line - #title, #title)
+end
 
 -- Link an der Stelle einfügen, an der der Cursor vor dem Eingabefenster
 -- stand - ohne Cursor (aus der Ansicht) ans Ende.
