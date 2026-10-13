@@ -506,7 +506,7 @@ function M:Build()
 
     local titleBox = CreateFrame("EditBox", nil, f)
     titleBox:SetPoint("TOPLEFT", left, -50)
-    titleBox:SetPoint("TOPRIGHT", -206, -50)
+    titleBox:SetPoint("TOPRIGHT", -298, -50)
     titleBox:SetHeight(22)
     titleBox:SetAutoFocus(false)
     titleBox:SetFontObject(ChatFontNormal)
@@ -546,6 +546,13 @@ function M:Build()
     pin:ClearAllPoints()
     pin:SetPoint("TOPRIGHT", -110, -50)
     f.pinButton = pin
+
+    -- Mit der Gruppe / dem Schlachtzug teilen (Share.lua).
+    local share = W:Button(f, { label = L["Share"], width = 86, height = 22,
+                                tooltip = L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added."],
+                                onClick = function() M:Share() end })
+    share:ClearAllPoints()
+    share:SetPoint("TOPRIGHT", -202, -50)
 
     -- Markdown-Knöpfe, nur beim Bearbeiten. Das Textfeld rückt dafür
     -- eine Zeile nach unten; die Ansicht braucht sie nicht.
@@ -771,6 +778,13 @@ function M:RefreshPinButton()
     local meta = note and ns.Markdown.Meta(note.text)
     local pinned = meta and ns.Markdown.Bool(meta.pin, false)
     f.pinButton.label:SetText(pinned and L["Unpin"] or L["Pin"])
+end
+
+function M:Share()
+    local s = store()
+    local note = self:Current()
+    if not note or not (note.text or ""):match("%S") then return end
+    ns.Share:Send(note, labelFor(note, s.current))
 end
 
 -- Anheften umschalten: "anheften: ja/nein" im Kopfblock der Notiz.
@@ -1101,9 +1115,12 @@ SlashCmdList.MARKNOTES = function(msg)
     elseif cmd == "new" or cmd == "neu" then
         M:Show()
         M:New()
+    elseif cmd == "share" or cmd == "teilen" then
+        M:Show()
+        M:Share()
     elseif cmd == "minimap" then
         ns.Minimap:Toggle()
     else
-        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz minimap|r show/hide button."])
+        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz share|r share with group, |cffffff00/notiz minimap|r show/hide button."])
     end
 end
