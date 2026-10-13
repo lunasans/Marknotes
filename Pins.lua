@@ -28,6 +28,7 @@ local MD = ns.Markdown
 local HEADER   = 20     -- Höhe der Kopfzeile
 local PAD      = 8      -- Innenabstand
 local AUTO_MAX = 500    -- Höchsthöhe ohne "höhe"
+local TEXTURES = "Interface\\AddOns\\Marknotes\\Textures\\"
 
 P.frames = {}           -- Notiz-Tabelle -> Fenster
 local free = {}         -- unbenutzte Fenster zum Wiederverwenden
@@ -88,7 +89,7 @@ local function create()
 
     head.title = head:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     head.title:SetPoint("LEFT", PAD, 0)
-    head.title:SetPoint("RIGHT", -38, 0)
+    head.title:SetPoint("RIGHT", -40, 0)
     head.title:SetJustifyH("LEFT")
     head.title:SetWordWrap(false)
     head.title:SetTextColor(W.ACCENT[1], W.ACCENT[2], W.ACCENT[3])
@@ -113,14 +114,23 @@ local function create()
     end)
     close:SetScript("OnClick", function() P:Unpin(f.note) end)
 
-    -- Schloss: schaltet "fixieren" in der Notiz um.
+    -- Schloss: schaltet "fixieren" in der Notiz um. Eigene Texturen
+    -- (Textures\Lock.tga und Unlock.tga, aus media\lock.py). Offen etwas
+    -- blasser, unter der Maus voll.
     local lock = CreateFrame("Button", nil, head)
-    lock:SetSize(14, 14)
-    lock:SetPoint("RIGHT", close, "LEFT", -2, 0)
+    lock:SetSize(16, 16)
+    lock:SetPoint("RIGHT", close, "LEFT", -1, 0)
     lock.icon = lock:CreateTexture(nil, "ARTWORK")
     lock.icon:SetAllPoints()
+    function lock:Paint()
+        local locked = f.settings and f.settings.lock
+        local lit = locked or self:IsMouseOver()
+        self.icon:SetTexture(TEXTURES .. (locked and "Lock" or "Unlock"))
+        self.icon:SetDesaturated(not lit)
+        self.icon:SetAlpha(lit and 1 or 0.6)
+    end
     lock:SetScript("OnEnter", function(self)
-        self.icon:SetAlpha(1)
+        self:Paint()
         local locked = f.settings.lock
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine(locked and L["Unlock"] or L["Lock"], 1, 1, 1)
@@ -130,7 +140,7 @@ local function create()
         GameTooltip:Show()
     end)
     lock:SetScript("OnLeave", function(self)
-        self.icon:SetAlpha(f.settings.lock and 1 or 0.5)
+        self:Paint()
         GameTooltip:Hide()
     end)
     lock:SetScript("OnClick", function(self)
@@ -221,9 +231,7 @@ local function layout(f, cfg)
 
     f.head:SetShown(cfg.title)
     f.head.title:SetText(ns.Notes.Label(f.note, f.index or 1))
-    f.head.lock.icon:SetTexture(cfg.lock and "Interface\\Buttons\\LockButton-Locked-Up"
-        or "Interface\\Buttons\\LockButton-Unlocked-Up")
-    if not f.head.lock:IsMouseOver() then f.head.lock.icon:SetAlpha(cfg.lock and 1 or 0.5) end
+    f.head.lock:Paint()
     local top = cfg.title and (HEADER + 4) or PAD
 
     local inner = cfg.width - 2 * PAD
