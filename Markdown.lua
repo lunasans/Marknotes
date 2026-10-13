@@ -114,8 +114,186 @@ local function indentOf(ws)
     return math.min(4, math.floor(width / 2))
 end
 
+-- ---------------------------------------------------------------- Einstellungen
+
+-- Einstellungen stehen in der Notiz selbst, als Kopfblock wie bei
+-- Obsidian oder Jekyll:
+--
+--   ---
+--   anheften: ja
+--   breite: 300
+--   ---
+--
+-- Englische und deutsche Schlüssel gehen beide. Als Kopfblock zählt das
+-- nur, wenn darin ausschließlich "schlüssel: wert"-Zeilen stehen und
+-- mindestens ein bekannter Schlüssel dabei ist - eine Notiz, die mit
+-- einer Trennlinie beginnt, bleibt eine Notiz mit Trennlinie.
+local KEYS = {
+    pin = "pin",          anheften = "pin",
+    width = "width",      breite = "width",
+    height = "height",    ["höhe"] = "height",    hoehe = "height",
+    opacity = "opacity",  alpha = "opacity",      deckkraft = "opacity",
+    scale = "scale",      skalierung = "scale",   ["größe"] = "scale",
+    lock = "lock",        fixieren = "lock",      sperren = "lock",
+    title = "title",      titel = "title",
+    combat = "combat",    kampf = "combat",
+}
+
+local YES = { ["ja"] = true, yes = true, ["true"] = true, on = true, an = true,
+              ["1"] = true, zeigen = true, show = true }
+local NO  = { nein = true, no = true, ["false"] = true, off = true, aus = true,
+              ["0"] = true, ausblenden = true, hide = true, verstecken = true }
+
+local function lines(text)
+    local out = {}
+    for line in ((text or ""):gsub("\r\n", "\n") .. "\n"):gmatch("(.-)\n") do
+        out[#out + 1] = line
+    end
+    return out
+end
+
+-- Kopfblock lesen. Liefert die Einstellungen (Schlüssel auf Englisch,
+-- Werte roh und klein geschrieben), die Zeile mit dem schließenden ---
+-- und je Einstellung die Zeile, in der sie steht. Ohne Kopfblock nil.
+function MD.Meta(text)
+    local ls = lines(text)
+    if not (ls[1] or ""):match("^%-%-%-%s*$") then return nil end
+
+    local meta, at, known = {}, {}, false
+    for i = 2, #ls do
+        local line = ls[i]
+        if line:match("^%-%-%-%s*$") then
+            if not known then return nil end
+            return meta, i, at
+        end
+        if line:match("%S") then
+            local k, v = line:match("^%s*([^:%s]+)%s*:%s*(.-)%s*$")
+            if not k then return nil end
+            local key = KEYS[lower(k)]
+            if key then
+                meta[key], at[key], known = lower(v), i, true
+            end
+        end
+    end
+    return nil
+end
+
+-- Wert als ja/nein lesen; unbekannt oder leer: fallback.
+function MD.Bool(v, fallback)
+    if v == nil then return fallback end
+    if YES[v] then return true end
+    if NO[v] then return false end
+    return fallback
+end
+
+-- Wert als Zahl lesen, auf min..max begrenzt. "70%" geht auch.
+function MD.Number(v, fallback, min, max)
+    local n = tonumber(((v or ""):gsub("%%%s*$", "")))
+    if not n then return fallback end
+    return math.max(min, math.min(max, n))
+end
+
+local GERMAN = { pin = "anheften", lock = "fixieren", width = "breite", height = "höhe" }
+
+-- Eine Einstellung im vorhandenen Kopfblock setzen: true/false als
+-- ja/nein, Zahlen wie sie sind, nil nimmt die Zeile heraus. Liefert die
+-- Zeilen, oder nil, wenn es keinen Kopfblock gibt.
+local function setValue(text, key, value, german)
+    local meta, close, at = MD.Meta(text)
+    if not meta then return nil end
+    local ls = lines(text)
+
+    local function word(de)
+        if value == true then return de and "ja" or "yes" end
+        if value == false then return de and "nein" or "no" end
+        return tostring(value)
+    end
+
+    if at[key] then
+        if value == nil then
+            table.remove(ls, at[key])
+        else
+            local k = ls[at[key]]:match("^%s*([^:%s]+)")
+            local lk = lower(k)
+            local de = KEYS[lk] == key and lk ~= key
+            ls[at[key]] = k .. ": " .. word(de)
+        end
+    elseif value ~= nil then
+        table.insert(ls, close, (german and GERMAN[key] or key) .. ": " .. word(german))
+    end
+    return ls
+end
+
+local function set(text, key, value, german)
+    local ls = setValue(text, key, value, german)
+    return ls and table.concat(ls, "\n") or text
+end
+
+-- "fixieren" ein- oder ausschalten. Nur mit Kopfblock - ohne ist die
+-- Notiz ohnehin nicht angeheftet.
+function MD.SetLock(text, on, german)
+    return set(text, "lock", on, german)
+end
+
+-- "breite" und "höhe" setzen. Höhe nil: Zeile weg, das Fenster passt
+-- sich wieder dem Text an.
+function MD.SetSize(text, width, height, german)
+    text = set(text, "width", width, german)
+    return set(text, "height", height, german)
+end
+
+-- "anheften" ein- oder ausschalten und den neuen Text liefern. Fehlt der
+-- Kopfblock, kommt einer an den Anfang; fehlt nur der Schlüssel, kommt
+-- er in den Block. Eine vorhandene Zeile behält ihre Sprache.
+function MD.SetPin(text, on, german)
+    local ls = setValue(text, "pin", on, german)
+    if not ls then
+        ls = lines(text)
+        local head = german
+            and { "---", "anheften: " .. (on and "ja" or "nein"), "breite: 300", "deckkraft: 70", "---" }
+            or  { "---", "pin: " .. (on and "yes" or "no"), "width: 300", "opacity: 70", "---" }
+        for k = #head, 1, -1 do table.insert(ls, 1, head[k]) end
+    end
+
+    return table.concat(ls, "\n")
+end
+
+-- Eigene Haken in eine neue Fassung übernehmen: Jede Checkbox, deren
+-- Text in der alten Fassung abgehakt war, bleibt abgehakt. Gebraucht
+-- beim Aktualisieren geteilter Notizen - wer selbst etwas abgehakt hat,
+-- verliert das nicht, nur weil die Raidleitung eine Zeile ergänzt.
+function MD.KeepChecks(new, old)
+    local done = {}
+    for line in ((old or "") .. "\n"):gmatch("(.-)\n") do
+        local item = line:match("^%s*[%-%*%+]%s+%[[xX]%]%s*(.-)%s*$")
+        if item then done[item] = true end
+    end
+
+    local out = {}
+    for line in ((new or "") .. "\n"):gmatch("(.-)\n") do
+        local head, gap, item = line:match("^(%s*[%-%*%+]%s+)%[ %](%s*)(.-)%s*$")
+        if item and done[item] then
+            line = head .. "[x]" .. gap .. line:sub(#head + 4 + #gap)
+        end
+        out[#out + 1] = line
+    end
+    return table.concat(out, "\n")
+end
+
+-- Text ohne Kopfblock (für Listenbeschriftung und Ähnliches).
+function MD.Body(text)
+    local _, close = MD.Meta(text)
+    if not close then return text or "" end
+    local ls = lines(text)
+    return table.concat(ls, "\n", close + 1)
+end
+
+-- ---------------------------------------------------------------- Blöcke
+
 -- Text in Blöcke zerlegen. Jeder Block mit Zeilennummer, wo es eine
 -- Rückverbindung braucht (Checkboxen schreiben in ihre Zeile zurück).
+-- Ein Kopfblock mit Einstellungen wird übersprungen, die Zeilennummern
+-- zählen ihn aber mit.
 function MD.Parse(text)
     text = (text or ""):gsub("\r\n", "\n")
 
@@ -125,7 +303,8 @@ function MD.Parse(text)
     local blocks = {}
     local function add(b) blocks[#blocks + 1] = b end
 
-    local i = 1
+    local _, close = MD.Meta(text)
+    local i = (close or 0) + 1
     while i <= #lines do
         local line = lines[i]
 
@@ -225,6 +404,8 @@ MD.COLOR = {
     strike = "|cff808080",
     code   = "|cffe6b464",
     link   = "|cff7aa2f7",
+    way    = "|cffffd100",
+    muted  = "|cff9aa0aa",
 }
 
 -- Zielmarkierungen, geschrieben wie im Chat: {rt1} bis {rt8}, englisch
@@ -246,6 +427,64 @@ MD.MARKER_NAMES_DE = { "stern", "kreis", "diamant", "dreieck", "mond", "quadrat"
 
 function MD.MarkerIcon(i, size)
     return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i .. ":" .. (size or 0) .. "|t"
+end
+
+-- ---------------------------------------------------------------- Wegpunkte
+
+-- "/way [#Karten-ID | Zonenname] x y [Titel]" - die TomTom-Schreibweise,
+-- wie sie in Guides und Wowhead-Kommentaren steht:
+--   /way 47.5 62.3 Bankier            (aktuelle Zone)
+--   /way #2112 47.5 62.3 Bankier      (Karten-ID)
+--   /way Valdrakken 47.5, 62.3 Bankier
+-- Liefert nil, wenn keine Koordinaten darin stehen - dann bleibt der Text.
+function MD.ParseWay(args)
+    local id, x, y, title = args:match("^#(%d+)%s+([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+    local zone
+    if not id then
+        x, y, title = args:match("^([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+        if not x then
+            zone, x, y, title = args:match("^(.-)%s+([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+        end
+    end
+    x, y = tonumber(x), tonumber(y)
+    if not x or not y or x > 100 or y > 100 then return nil end
+    return {
+        mapID = tonumber(id), x = x, y = y, title = title or "",
+        zone  = (zone and zone:match("%S")) and zone or nil,
+    }
+end
+
+-- Optional vom Aufrufer gesetzt: Karten-ID -> Name. Der Parser selbst
+-- kennt keine Spiel-API.
+MD.MapName  = nil
+MD.WAYPOINT = ns.L and ns.L["Waypoint"] or "Waypoint"
+local PIN = "|A:Waypoint-MapPin-ChatIcon:13:13:0:0|a"
+
+-- Link "way:<ID oder 0>:<x>:<y>:<Zone>:<Titel>" - der Titel steht
+-- zuletzt und darf Doppelpunkte enthalten.
+function MD.WayLink(w)
+    local data = table.concat({ w.mapID or 0, w.x, w.y, (w.zone or ""):gsub(":", " "), w.title }, ":")
+    local where = w.zone or (w.mapID and MD.MapName and MD.MapName(w.mapID)) or nil
+    local coords = w.x .. ", " .. w.y
+    local label, extra
+    if w.title ~= "" then
+        label, extra = w.title, where and (where .. " " .. coords) or coords
+    else
+        label, extra = where or MD.WAYPOINT, coords
+    end
+    return "|Hway:" .. data .. "|h" .. MD.COLOR.way .. PIN .. " " .. label .. "|r "
+        .. MD.COLOR.muted .. extra .. "|r|h"
+end
+
+-- Gegenstück für den Klick: Link-Daten zurück in Felder.
+function MD.ParseWayLink(link)
+    local id, x, y, zone, title = link:match("^way:([^:]*):([^:]*):([^:]*):([^:]*):(.*)$")
+    if not id then return nil end
+    id = tonumber(id)
+    return {
+        mapID = (id and id > 0) and id or nil, x = tonumber(x), y = tonumber(y),
+        zone = zone ~= "" and zone or nil, title = title or "",
+    }
 end
 
 local function linkFor(url, label)
@@ -272,6 +511,13 @@ function MD.Inline(s)
     s = s:gsub("|A.-|a", stash)
 
     s = s:gsub("`([^`]+)`", function(c) return stash(MD.COLOR.code .. c .. "|r") end)
+
+    -- Wegpunkt: alles ab "/way" (oder TomToms "/tway") bis zum Zeilenende.
+    local head, args = s:match("^(.-)/t?way%s+(.+)$")
+    if head then
+        local w = MD.ParseWay(args)
+        if w then s = head .. stash(MD.WayLink(w)) end
+    end
 
     -- Unbekanntes in {} bleibt stehen, wie es ist.
     s = s:gsub("{([^{}]+)}", function(name)
