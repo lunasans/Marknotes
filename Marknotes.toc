@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120100, 120105
 ## Title: |cff7aa2f7Mark|rnotes
 ## Notes: Notes with Markdown: tables, checklists, raid markers, waypoints and item links. Pin notes to the screen and share them live with your group.
 ## Notes-deDE: Notizen mit Markdown: Tabellen, Checklisten, Zielmarkierungen, Wegpunkte und Gegenstandslinks. Notizen auf dem Bildschirm anheften und live mit der Gruppe teilen.
