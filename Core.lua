@@ -16,6 +16,26 @@ U.COLOR = {
 }
 W.ACCENT = U.COLOR.accent
 
+-- Version aus der TOC. Die Nummer setzt der Packager beim Release für
+-- @project-version@ ein; eine Kopie direkt aus dem Repository trägt noch
+-- den Platzhalter und heißt hier "dev".
+do
+    local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    local v = getMeta and getMeta(ADDON, "Version")
+    if not v or v == "" or v:find("@", 1, true) then v = "dev" end
+    ns.version = v
+    ns.author = getMeta and getMeta(ADDON, "Author") or nil
+end
+
+-- "v1.1.0 - by LunaSans-Thrall" für die kleine Zeile unten links im
+-- Fenster. Beides kommt aus der TOC.
+function ns:Credits()
+    if self.author and self.author ~= "" then
+        return self.version .. "  -  " .. L["by %s"]:format(self.author)
+    end
+    return self.version
+end
+
 function ns:Print(fmt, ...)
     local msg = select("#", ...) > 0 and fmt:format(...) or fmt
     print("|cff7aa2f7Marknotes|r: " .. msg)

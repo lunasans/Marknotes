@@ -10,6 +10,7 @@
 ## X-Category: Miscellaneous
 ## X-License: All Rights Reserved
 ## X-Wago-ID: XKqEmlKy
+## X-Curse-Project-ID: 1741462
 
 Locales.lua
 Core.lua
