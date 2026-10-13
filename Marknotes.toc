@@ -15,4 +15,5 @@ Locales.lua
 Core.lua
 Markdown.lua
 Notes.lua
+Pins.lua
 Minimap.lua
