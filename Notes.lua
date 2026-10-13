@@ -448,14 +448,24 @@ function M:Build()
     local new = W:Button(f, { label = L["New note"], width = LIST - 20, height = 22,
                               onClick = function() M:New() end })
     new:ClearAllPoints()
-    new:SetPoint("BOTTOMLEFT", 10, 40)
+    new:SetPoint("BOTTOMLEFT", 10, 50)
 
     local del = W:Button(f, { label = L["Delete"], width = LIST - 20, height = 22,
                               onClick = function()
                                   if M:Current() then StaticPopup_Show("MARKNOTES_DELETE") end
                               end })
     del:ClearAllPoints()
-    del:SetPoint("BOTTOMLEFT", 10, 12)
+    del:SetPoint("BOTTOMLEFT", 10, 22)
+
+    -- Version und Entwickler, klein unter den Knöpfen.
+    local credits = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    credits:SetPoint("BOTTOMLEFT", 10, 7)
+    credits:SetPoint("BOTTOMRIGHT", f, "BOTTOMLEFT", LIST - 10, 7)
+    credits:SetJustifyH("CENTER")
+    credits:SetWordWrap(false)
+    credits:SetText(ns:Credits())
+    local font, size, flags = credits:GetFont()
+    if font then credits:SetFont(font, math.max(8, (size or 10) - 1), flags or "") end
 
     -- Rechts: Titel, Text, Gegenstände.
     local left = LIST + 20

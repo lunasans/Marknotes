@@ -15,6 +15,7 @@ L["Title"]                 = "Titel"
 L["Edit"]                  = "Bearbeiten"
 L["Preview"]               = "Ansicht"
 L["Note %d"]               = "Notiz %d"
+L["by %s"]                 = "von %s"
 L["Delete this note?"]     = "Diese Notiz löschen?"
 L["Empty note - double-click to write."] = "Leere Notiz - Doppelklick zum Schreiben."
 
