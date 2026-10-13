@@ -18,8 +18,8 @@
 # nur dieser Upload.
 #
 # Die Spielversion für CurseForge kommt aus "## Interface:" in der TOC -
-# bei einem neuen Patch dort ergänzen. Der Anzeigename dort ist
-# "Marknotes <Tag>" statt nur des Tags.
+# bei einem neuen Patch dort ergänzen. Der Anzeigename dort ist nur
+# "Marknotes", ohne Version.
 #
 # Tags mit "alpha"/"beta" im Namen werden als Vorabversion markiert.
 name: Release
@@ -44,4 +44,4 @@ jobs:
 
       - uses: BigWigsMods/packager@v2
         with:
-          args: -n "{package-name}-{project-version}:{package-name} {project-version}"
+          args: -n "{package-name}-{project-version}:{package-name}"
