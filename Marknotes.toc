@@ -1,7 +1,7 @@
 ## Interface: 120100
 ## Title: |cff7aa2f7Mark|rnotes
-## Notes: Notes with Markdown: tables, checklists, links and item links with Auction House search.
-## Notes-deDE: Notizen mit Markdown: Tabellen, Checklisten, Links und Gegenstandslinks mit Auktionshaus-Suche.
+## Notes: Notes with Markdown: tables, checklists, raid markers, waypoints and item links. Pin notes to the screen and share them live with your group.
+## Notes-deDE: Notizen mit Markdown: Tabellen, Checklisten, Zielmarkierungen, Wegpunkte und Gegenstandslinks. Notizen auf dem Bildschirm anheften und live mit der Gruppe teilen.
 ## Author: LunaSans-Thrall
 ## Version: @project-version@
 ## SavedVariables: MarknotesDB
