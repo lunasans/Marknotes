@@ -186,22 +186,40 @@ function MD.Number(v, fallback, min, max)
     return math.max(min, math.min(max, n))
 end
 
+local GERMAN = { pin = "anheften", lock = "fixieren" }
+
+-- Eine ja/nein-Einstellung im vorhandenen Kopfblock setzen. Liefert die
+-- Zeilen, oder nil, wenn es keinen Kopfblock gibt.
+local function setFlag(text, key, on, german)
+    local meta, close, at = MD.Meta(text)
+    if not meta then return nil end
+    local ls = lines(text)
+
+    if at[key] then
+        local k = ls[at[key]]:match("^%s*([^:%s]+)")
+        local de = KEYS[k:lower()] == key and k:lower() ~= key
+        ls[at[key]] = k .. ": " .. (on and (de and "ja" or "yes") or (de and "nein" or "no"))
+    else
+        table.insert(ls, close, (german and GERMAN[key] or key) .. ": "
+            .. (on and (german and "ja" or "yes") or (german and "nein" or "no")))
+    end
+    return ls
+end
+
+-- "fixieren" ein- oder ausschalten. Nur mit Kopfblock - ohne ist die
+-- Notiz ohnehin nicht angeheftet.
+function MD.SetLock(text, on, german)
+    local ls = setFlag(text, "lock", on, german)
+    return ls and table.concat(ls, "\n") or text
+end
+
 -- "anheften" ein- oder ausschalten und den neuen Text liefern. Fehlt der
 -- Kopfblock, kommt einer an den Anfang; fehlt nur der Schlüssel, kommt
 -- er in den Block. Eine vorhandene Zeile behält ihre Sprache.
 function MD.SetPin(text, on, german)
-    local meta, close, at = MD.Meta(text)
-    local ls = lines(text)
-
-    if meta and at.pin then
-        local line = ls[at.pin]
-        local k = line:match("^%s*([^:%s]+)")
-        local de = k:lower() == "anheften"
-        ls[at.pin] = k .. ": " .. (on and (de and "ja" or "yes") or (de and "nein" or "no"))
-    elseif meta then
-        table.insert(ls, close, (german and "anheften: " or "pin: ")
-            .. (on and (german and "ja" or "yes") or (german and "nein" or "no")))
-    else
+    local ls = setFlag(text, "pin", on, german)
+    if not ls then
+        ls = lines(text)
         local head = german
             and { "---", "anheften: " .. (on and "ja" or "nein"), "breite: 300", "deckkraft: 70", "---" }
             or  { "---", "pin: " .. (on and "yes" or "no"), "width: 300", "opacity: 70", "---" }

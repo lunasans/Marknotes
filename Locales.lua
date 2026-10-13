@@ -45,6 +45,11 @@ L["Unpin"]                 = "Lösen"
 L["Show this note on screen, outside this window.\nSettings go into the block at the top of the note:\n\npin: yes / no\nwidth: 300\nheight: 200\nopacity: 70\nscale: 100\nlock: yes\ntitle: no\ncombat: hide"] =
     "Diese Notiz auf dem Bildschirm zeigen, auch ohne dieses Fenster.\nEingestellt wird im Block ganz oben in der Notiz:\n\nanheften: ja / nein\nbreite: 300\nhöhe: 200\ndeckkraft: 70\ngröße: 100\nfixieren: ja\ntitel: nein\nkampf: ausblenden"
 L["Sets the note back to \"pin: no\"."] = "Setzt die Notiz auf \"anheften: nein\"."
+L["Lock"]                  = "Fixieren"
+L["Unlock"]                = "Fixierung lösen"
+L["Sets the note to \"lock: yes\" - it can no longer be dragged."] =
+    "Setzt die Notiz auf \"fixieren: ja\" - sie lässt sich nicht mehr verschieben."
+L["Sets the note to \"lock: no\"."] = "Setzt die Notiz auf \"fixieren: nein\"."
 
 -- Teilen
 L["Share"]                 = "Teilen"

@@ -88,7 +88,7 @@ local function create()
 
     head.title = head:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     head.title:SetPoint("LEFT", PAD, 0)
-    head.title:SetPoint("RIGHT", -22, 0)
+    head.title:SetPoint("RIGHT", -38, 0)
     head.title:SetJustifyH("LEFT")
     head.title:SetWordWrap(false)
     head.title:SetTextColor(W.ACCENT[1], W.ACCENT[2], W.ACCENT[3])
@@ -112,6 +112,32 @@ local function create()
         GameTooltip:Hide()
     end)
     close:SetScript("OnClick", function() P:Unpin(f.note) end)
+
+    -- Schloss: schaltet "fixieren" in der Notiz um.
+    local lock = CreateFrame("Button", nil, head)
+    lock:SetSize(14, 14)
+    lock:SetPoint("RIGHT", close, "LEFT", -2, 0)
+    lock.icon = lock:CreateTexture(nil, "ARTWORK")
+    lock.icon:SetAllPoints()
+    lock:SetScript("OnEnter", function(self)
+        self.icon:SetAlpha(1)
+        local locked = f.settings.lock
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(locked and L["Unlock"] or L["Lock"], 1, 1, 1)
+        GameTooltip:AddLine(locked and L["Sets the note to \"lock: no\"."]
+            or L["Sets the note to \"lock: yes\" - it can no longer be dragged."],
+            0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    lock:SetScript("OnLeave", function(self)
+        self.icon:SetAlpha(f.settings.lock and 1 or 0.5)
+        GameTooltip:Hide()
+    end)
+    lock:SetScript("OnClick", function(self)
+        P:SetLock(f.note, not f.settings.lock)
+        if GameTooltip:IsOwned(self) then self:GetScript("OnEnter")(self) end
+    end)
+    head.lock = lock
 
     -- Doppelklick auf die Kopfzeile öffnet die Notiz im Fenster.
     head:EnableMouse(true)
@@ -195,6 +221,9 @@ local function layout(f, cfg)
 
     f.head:SetShown(cfg.title)
     f.head.title:SetText(ns.Notes.Label(f.note, f.index or 1))
+    f.head.lock.icon:SetTexture(cfg.lock and "Interface\\Buttons\\LockButton-Locked-Up"
+        or "Interface\\Buttons\\LockButton-Unlocked-Up")
+    if not f.head.lock:IsMouseOver() then f.head.lock.icon:SetAlpha(cfg.lock and 1 or 0.5) end
     local top = cfg.title and (HEADER + 4) or PAD
 
     local inner = cfg.width - 2 * PAD
@@ -266,6 +295,13 @@ function P:Unpin(note)
     self:Update()
     ns.Notes:NoteChanged(note)
     ns.Share:Changed(note)
+end
+
+function P:SetLock(note, on)
+    note.text = MD.SetLock(note.text, on, GetLocale() == "deDE")
+    note.updated = time()
+    self:Update()
+    ns.Notes:NoteChanged(note)
 end
 
 -- Die Notiz im großen Fenster öffnen.
