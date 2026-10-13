@@ -73,8 +73,10 @@ L["Table with header row\n:--- / :---: / ---: aligns columns."] =
 L["Code block  ``` ... ```"] = "Codeblock  ``` ... ```"
 L["Rule"]                  = "Linie"
 L["Horizontal rule  ---"]  = "Trennlinie  ---"
-L["Raid marker and role  {star} {skull} {tank} ...\nLike in chat. English, German or {rt1} to {rt8}.\nRoles: {tank} {healer} {dps}."] =
-    "Zielmarkierung und Rolle  {stern} {totenschädel} {tank} ...\nWie im Chat. Deutsch, Englisch oder {rt1} bis {rt8}.\nRollen: {tank} {heiler} {dd}."
+L["Raid marker  {star} {skull} ...\nLike in chat. English, German or {rt1} to {rt8}."] =
+    "Zielmarkierung  {stern} {totenschädel} ...\nWie im Chat. Deutsch, Englisch oder {rt1} bis {rt8}."
+L["Role  {tank} {healer} {dps}\nFor splitting up groups. English or German."] =
+    "Rolle  {tank} {heiler} {dd}\nZum Einteilen von Gruppen. Deutsch oder Englisch."
 L["Column 1"]              = "Spalte 1"
 L["Column 2"]              = "Spalte 2"
 

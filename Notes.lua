@@ -25,7 +25,7 @@ local L = ns.L
 
 -- Startgröße und zugleich Mindestbreite: schmaler passt die Werkzeugleiste
 -- nicht mehr in eine Zeile.
-local WIDTH, HEIGHT = 800, 520
+local WIDTH, HEIGHT = 830, 520
 local MIN_HEIGHT    = 440
 local LIST          = 180     -- Breite der Notizliste links
 local ICON, GAP     = 30, 4   -- Gegenstandssymbole unten
@@ -384,35 +384,49 @@ local TOOLS = {
     { "Block", L["Code block  ``` ... ```"], function() M:InsertBlock("```\n\n```", 4, 0) end },
     { L["Rule"], L["Horizontal rule  ---"], function() M:InsertBlock("---") end },
     false,
-    { ns.Markdown.MarkerIcon(1, 14), L["Raid marker and role  {star} {skull} {tank} ...\nLike in chat. English, German or {rt1} to {rt8}.\nRoles: {tank} {healer} {dps}."],
-      function(btn) M:MarkerMenu(btn) end },
+    { ns.Markdown.MarkerIcon(1, 14), L["Raid marker  {star} {skull} ...\nLike in chat. English, German or {rt1} to {rt8}."],
+      function(btn) M:IconMenu("markers", btn) end },
+    { ns.Markdown.RoleIcon("Tank", 14), L["Role  {tank} {healer} {dps}\nFor splitting up groups. English or German."],
+      function(btn) M:IconMenu("roles", btn) end },
 }
 
--- Auswahl unter dem Knopf: die acht Zielmarkierungen, nach einer Lücke
--- die drei Rollen. Hängt an der Werkzeugleiste und verschwindet mit ihr.
-function M:MarkerMenu(btn)
-    local menu = self.markerMenu
-    if not menu then
-        local MD = ns.Markdown
-        local de = GetLocale() == "deDE"
-        local entries = {}
+-- Was die Auswahl-Knöpfe anbieten: je Eintrag Textur und Name.
+local function iconEntries(kind)
+    local MD = ns.Markdown
+    local de = GetLocale() == "deDE"
+    local entries = {}
+    if kind == "markers" then
         for i = 1, 8 do
-            entries[#entries + 1] = { "Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i,
-                                      (de and MD.MARKER_NAMES_DE or MD.MARKER_NAMES_EN)[i] }
+            entries[i] = { "Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i,
+                           (de and MD.MARKER_NAMES_DE or MD.MARKER_NAMES_EN)[i] }
         end
-        for _, role in ipairs(MD.ROLES) do
-            entries[#entries + 1] = { MD.ROLE_TEXTURE .. role,
-                                      (de and MD.ROLE_NAMES_DE or MD.ROLE_NAMES_EN)[role], gap = true }
+    else
+        for i, role in ipairs(MD.ROLES) do
+            entries[i] = { MD.ROLE_TEXTURE .. role, (de and MD.ROLE_NAMES_DE or MD.ROLE_NAMES_EN)[role] }
         end
+    end
+    return entries
+end
 
-        local SPLIT = 8     -- Lücke zwischen Markern und Rollen
+-- Auswahl unter dem Knopf: die acht Zielmarkierungen oder die drei
+-- Rollen. Hängt an der Werkzeugleiste und verschwindet mit ihr. Es ist
+-- immer nur eine offen.
+function M:IconMenu(kind, btn)
+    self.iconMenus = self.iconMenus or {}
+    for k, other in pairs(self.iconMenus) do
+        if k ~= kind then other:Hide() end
+    end
+
+    local menu = self.iconMenus[kind]
+    if not menu then
+        local entries = iconEntries(kind)
         menu = U:Skin(CreateFrame("Frame", nil, self.frame.toolbar), 0.95)
         menu:SetFrameLevel(self.frame.toolbar:GetFrameLevel() + 30)
-        menu:SetSize(#entries * 24 + SPLIT + 6, 30)
+        menu:SetSize(#entries * 24 + 6, 30)
         for i, e in ipairs(entries) do
             local b = CreateFrame("Button", nil, menu)
             b:SetSize(22, 22)
-            b:SetPoint("LEFT", 4 + (i - 1) * 24 + (e.gap and SPLIT or 0), 0)
+            b:SetPoint("LEFT", 4 + (i - 1) * 24, 0)
             local icon = b:CreateTexture(nil, "ARTWORK")
             icon:SetAllPoints()
             icon:SetTexture(e[1])
@@ -431,7 +445,7 @@ function M:MarkerMenu(btn)
             end)
         end
         menu:Hide()
-        self.markerMenu = menu
+        self.iconMenus[kind] = menu
     end
     menu:ClearAllPoints()
     menu:SetPoint("TOPRIGHT", btn, "BOTTOMRIGHT", 0, -2)
