@@ -110,6 +110,28 @@ local function alignOf(cell)
     return "LEFT"
 end
 
+-- Hervorhebung um den Anfang eines Listenpunkts nach innen holen:
+-- "**- [x] Text**" und "- **[x] Text**" werden zu "- [x] **Text**",
+-- "- **[x]** Text" zu "- [x] Text". Sonst ist die erste Zeile keine
+-- Liste und die anderen keine Checkbox.
+local EMPHASIS = { ["**"] = true, ["__"] = true, ["~~"] = true, ["*"] = true, ["_"] = true }
+
+local function liftEmphasis(line)
+    local ind, em, bullet, body = line:match("^(%s*)([%*_~]+)([%-%*%+]%s+)(.*)$")
+    if em and EMPHASIS[em] and #body > #em and body:sub(-#em) == em then
+        line = ind .. bullet .. em .. body
+    end
+    local head, em2, box, tail = line:match("^(%s*[%-%*%+]%s+)([%*_~]+)(%[[ xX]%]%s*)(.*)$")
+    if em2 and EMPHASIS[em2] then
+        if tail:sub(1, #em2) == em2 then
+            line = head .. box .. tail:sub(#em2 + 1):gsub("^%s+", "")
+        else
+            line = head .. box .. em2 .. tail
+        end
+    end
+    return line
+end
+
 local function indentOf(ws)
     local width = #ws:gsub("\t", "    ")
     return math.min(4, math.floor(width / 2))
@@ -341,6 +363,7 @@ function MD.Parse(text)
             i = i + 1
 
         else
+            line = liftEmphasis(line)
             local hashes, htext = line:match("^%s*(#+)%s+(.+)$")
             local ind, rest     = line:match("^(%s*)[%-%*%+]%s+(.*)$")
             local oind, num, orest = line:match("^(%s*)(%d+)[%.%)]%s+(.*)$")
