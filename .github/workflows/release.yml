@@ -1,8 +1,8 @@
 # Paket bauen und als GitHub-Release veröffentlichen, sobald ein Tag
 # gepusht wird:
 #
-#   git tag v1.0.1
-#   git push origin v1.0.1
+#   git tag v1.1.0
+#   git push origin v1.1.0
 #
 # Der BigWigs-Packager baut die ZIP (Inhalt laut .pkgmeta), setzt die
 # Version aus dem Tag in die TOC (@project-version@) und hängt sie an
@@ -10,6 +10,12 @@
 # Webhook im Repository (Settings -> Webhooks, Ereignis "Releases") -
 # deshalb hier kein direkter Upload zu Wago, sonst käme jede Version
 # doppelt an.
+#
+# Zu CurseForge lädt der Packager selbst hoch: Projekt-ID aus der TOC
+# (X-Curse-Project-ID), Schlüssel aus dem Secret CF_API_KEY (Token von
+# https://legacy.curseforge.com/account/api-tokens, im Repository unter
+# Settings -> Secrets and variables -> Actions). Ohne Secret entfällt
+# nur dieser Upload.
 #
 # Tags mit "alpha"/"beta" im Namen werden als Vorabversion markiert.
 name: Release
@@ -26,6 +32,7 @@ jobs:
       contents: write
     env:
       GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
