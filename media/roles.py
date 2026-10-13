@@ -1,9 +1,11 @@
 """Rollen-Symbole für Notizen: Tank, Heiler, Schaden.
 
-Im Stil des Logos: runde Plakette mit Goldring und dunklem Saum, innen
-die Farbe der Rolle (blau, grün, rot), darauf ein silbernes Zeichen -
-Schild, Kreuz, Schwert. Gezeichnet auf 512 px, verkleinert auf 64 px
-(Zweierpotenz, 32 Bit, unkomprimiertes TGA).
+Im Stil des Logos: runde Plakette mit dünnem Goldring und dunklem Saum,
+innen die Farbe der Rolle (blau, grün, rot), darauf ein großes weißes
+Zeichen - Schild, Kreuz, Schwert. Im Text stehen die Symbole in
+Zeilenhöhe (rund 14 px), deshalb füllt das Zeichen fast die ganze
+Plakette und Ring wie Glanz bleiben schmal. Gezeichnet auf 512 px,
+verkleinert auf 64 px (Zweierpotenz, 32 Bit, unkomprimiertes TGA).
 
 Aufruf: python roles.py   (schreibt nach ..\\Textures)
 """
@@ -16,7 +18,7 @@ TEX.mkdir(exist_ok=True)
 S = 512
 C = S // 2
 GOLD_HI, GOLD_MID, GOLD_LO = (255, 232, 150), (214, 160, 60), (110, 66, 20)
-SILVER_HI, SILVER_LO = (255, 255, 255), (150, 158, 175)
+SILVER_HI, SILVER_LO = (255, 255, 255), (190, 198, 212)
 EDGE = (28, 16, 4)
 
 ROLES = {
@@ -54,20 +56,20 @@ def disc(r):
 
 
 def shield(d):
-    d.polygon([(150, 128), (256, 104), (362, 128), (362, 250), (340, 320),
-               (256, 404), (172, 320), (150, 250)], fill=255)
+    d.polygon([(110, 104), (256, 72), (402, 104), (402, 250), (372, 336),
+               (256, 448), (140, 336), (110, 250)], fill=255)
 
 
 def cross(d):
-    d.rounded_rectangle((212, 112, 300, 400), radius=16, fill=255)
-    d.rounded_rectangle((112, 212, 400, 300), radius=16, fill=255)
+    d.rounded_rectangle((196, 76, 316, 436), radius=20, fill=255)
+    d.rounded_rectangle((76, 196, 436, 316), radius=20, fill=255)
 
 
 def sword(d):
-    d.polygon([(256, 84), (282, 124), (278, 318), (234, 318), (230, 124)], fill=255)
-    d.rounded_rectangle((180, 312, 332, 342), radius=10, fill=255)
-    d.rectangle((242, 342, 270, 404), fill=255)
-    d.ellipse((232, 398, 280, 446), fill=255)
+    d.polygon([(256, 40), (316, 110), (308, 316), (204, 316), (196, 110)], fill=255)
+    d.rounded_rectangle((140, 306, 372, 356), radius=14, fill=255)
+    d.rectangle((230, 356, 282, 430), fill=255)
+    d.ellipse((222, 418, 290, 486), fill=255)
 
 
 EMBLEMS = {"Tank": (shield, 0), "Healer": (cross, 0), "Damager": (sword, -45)}
@@ -77,25 +79,20 @@ def badge(role):
     hi, lo = ROLES[role]
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 
-    # Saum, Goldring, Rollenfarbe.
-    img.paste(solid(EDGE), (0, 0), disc(252))
-    img.paste(gradient([(0, GOLD_HI), (0.45, GOLD_MID), (1, GOLD_LO)]), (0, 0), disc(240))
-    img.paste(solid(EDGE), (0, 0), disc(206))
-    img.paste(gradient([(0, hi), (1, lo)]), (0, 0), disc(198))
-    # Glanz oben in der Rollenfarbe.
-    shine = Image.new("L", (S, S), 0)
-    ImageDraw.Draw(shine).ellipse((C - 150, C - 186, C + 150, C - 30), fill=90)
-    shine = Image.composite(shine.filter(ImageFilter.GaussianBlur(20)), Image.new("L", (S, S), 0), disc(198))
-    img.paste(solid((255, 255, 255)), (0, 0), shine)
+    # Saum, schmaler Goldring, Rollenfarbe.
+    img.paste(solid(EDGE), (0, 0), disc(254))
+    img.paste(gradient([(0, GOLD_HI), (0.45, GOLD_MID), (1, GOLD_LO)]), (0, 0), disc(244))
+    img.paste(solid(EDGE), (0, 0), disc(226))
+    img.paste(gradient([(0, hi), (1, lo)]), (0, 0), disc(220))
 
-    # Zeichen: dunkler Saum, darüber Silber von hell nach dunkel.
+    # Zeichen: dunkler Saum, darüber Weiß, unten leicht silbern.
     draw, angle = EMBLEMS[role]
     m = Image.new("L", (S, S), 0)
     draw(ImageDraw.Draw(m))
     if angle:
         m = m.rotate(angle, resample=Image.BICUBIC, center=(C, C))
-    img.paste(solid(EDGE), (0, 0), m.filter(ImageFilter.MaxFilter(25)))
-    img.paste(gradient([(0, SILVER_HI), (0.55, (215, 220, 230)), (1, SILVER_LO)]), (0, 0), m)
+    img.paste(solid(EDGE), (0, 0), m.filter(ImageFilter.MaxFilter(21)))
+    img.paste(gradient([(0, SILVER_HI), (0.6, SILVER_HI), (1, SILVER_LO)]), (0, 0), m)
 
     return img.resize((64, 64), Image.LANCZOS)
 
