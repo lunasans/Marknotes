@@ -18,6 +18,7 @@
   - All items of a note appear as icons below it – click one to **search it at the Auction House**
 - **Pin notes to the screen** – show any note as a small Markdown window right on your UI, with clickable checklists; set it up inside the note itself (see below)
 - **Share with your group or raid** – send a note to everyone in your group who has Marknotes; they're asked once, after that **every change you make updates their copy automatically** (their own ticks stay)
+- **Waypoints** – write `/way 47.5 62.3 Banker`, `/way #2112 47.5 62.3` or `/way Valdrakken 47.5 62.3` (TomTom style, as found in guides; `/tway` works too). In the preview it becomes a link: click it to set the waypoint – in **TomTom** if installed, otherwise as the game's own map pin. Shift-clicking a map pin on the world map inserts it as well, and **+ Position** inserts where you are standing right now.
 - **Auction House button** – open your notes right next to the Auction House
 - **Resizable window** – size and position are remembered
 - **Minimap button** – left-click opens, right-click creates a new note, drag to move
@@ -95,6 +96,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
   - Alle Gegenstände einer Notiz stehen als Symbole darunter – ein Klick **sucht im Auktionshaus**
 - **Notizen anheften** – jede Notiz als kleines Markdown-Fenster direkt auf dem Bildschirm, Checklisten per Klick abhakbar; eingestellt wird in der Notiz selbst (siehe unten)
 - **Mit Gruppe oder Schlachtzug teilen** – eine Notiz an alle in der Gruppe senden, die Marknotes haben; sie werden einmal gefragt, danach **aktualisiert sich ihre Kopie bei jeder Änderung automatisch** (eigene Haken bleiben)
+- **Wegpunkte** – `/way 47.5 62.3 Bankier`, `/way #2112 47.5 62.3` oder `/way Valdrakken 47.5 62.3` schreiben (TomTom-Schreibweise wie in Guides, auch `/tway`). In der Ansicht wird daraus ein Link: ein Klick setzt den Wegpunkt – in **TomTom**, wenn installiert, sonst als Kartenpin des Spiels. Shift-Klick auf einen Pin der Weltkarte fügt ihn ebenfalls ein, **+ Position** die Stelle, an der du gerade stehst.
 - **Knopf am Auktionshaus** – Notizen direkt daneben öffnen
 - **Fenstergröße veränderbar** – Größe und Position werden gemerkt
 - **Minimap-Knopf** – Linksklick öffnet, Rechtsklick legt eine neue Notiz an, Ziehen verschiebt

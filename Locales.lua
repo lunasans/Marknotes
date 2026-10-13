@@ -79,6 +79,23 @@ L["%s shares the note \"%s\" with you.\nAdd it to your notes?"] =
 L["Note \"%s\" from %s added. It updates automatically when %s changes it."] =
     "Notiz \"%s\" von %s hinzugefügt. Sie aktualisiert sich, wenn %s sie ändert."
 L["Note \"%s\" from %s updated."] = "Notiz \"%s\" von %s aktualisiert."
+-- Wegpunkte
+L["Waypoint"]              = "Wegpunkt"
+L["current zone"]          = "aktuelle Zone"
+L["Map pin"]               = "Kartenmarkierung"
+L["Click: set TomTom waypoint"] = "Klick: Wegpunkt in TomTom setzen"
+L["Click: set map pin"]    = "Klick: Kartenpin setzen"
+L["Click: open the map and set the pin"] = "Klick: Karte öffnen und Pin setzen"
+L["Zone |cffffff00%s|r not found - use the map ID instead: /way #ID x y."] =
+    "Zone |cffffff00%s|r nicht gefunden - mit Karten-ID angeben: /way #ID x y."
+L["There is no map for your current position."] = "Für die aktuelle Position gibt es keine Karte."
+L["WoW does not allow a map pin on %s."] = "Auf der Karte %s erlaubt WoW keinen Kartenpin."
+L["Map pin set: |cffffd100%s|r (%s %s, %s)"] = "Kartenpin gesetzt: |cffffd100%s|r (%s %s, %s)"
+L["+ Position"]            = "+ Position"
+L["Insert your current position as a waypoint (/way #map x y).\nWoW does not reveal your position inside instances."] =
+    "Aktuelle Position als Wegpunkt einfügen (/way #Karte x y).\nIn Instanzen gibt WoW keine Position heraus."
+L["Your position is not available here (e.g. inside instances)."] =
+    "Deine Position ist hier nicht verfügbar (z. B. in Instanzen)."
 
 -- Links
 L["Click: copy address"]   = "Klick: Adresse kopieren"
