@@ -223,8 +223,8 @@ local function changed(note)
     ns.Pins:Update()
 end
 
--- Neue Fassung in eine angenommene Notiz übernehmen: Haken und
--- Anheften bleiben, wie der Empfänger sie hatte.
+-- Neue Fassung in eine angenommene Notiz übernehmen: Haken, Anheften
+-- und Fixieren bleiben, wie der Empfänger sie hatte.
 local function apply(note, o)
     local text = MD.KeepChecks(o.text, note.text)
     local meta = MD.Meta(note.text)
@@ -233,6 +233,13 @@ local function apply(note, o)
         local newMeta = MD.Meta(text)
         if not newMeta or MD.Bool(newMeta.pin, false) ~= pinned then
             text = MD.SetPin(text, pinned, GetLocale() == "deDE")
+        end
+    end
+    if meta and meta.lock ~= nil then
+        local locked = MD.Bool(meta.lock, false)
+        local newMeta = MD.Meta(text)
+        if newMeta and MD.Bool(newMeta.lock, false) ~= locked then
+            text = MD.SetLock(text, locked, GetLocale() == "deDE")
         end
     end
     note.text = text

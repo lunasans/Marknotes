@@ -302,6 +302,7 @@ function P:SetLock(note, on)
     note.updated = time()
     self:Update()
     ns.Notes:NoteChanged(note)
+    ns.Share:Changed(note)
 end
 
 -- Die Notiz im großen Fenster öffnen.
