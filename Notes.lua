@@ -25,7 +25,7 @@ local L = ns.L
 
 -- Startgröße und zugleich Mindestbreite: schmaler passt die Werkzeugleiste
 -- nicht mehr in eine Zeile.
-local WIDTH, HEIGHT = 760, 520
+local WIDTH, HEIGHT = 800, 520
 local MIN_HEIGHT    = 440
 local LIST          = 180     -- Breite der Notizliste links
 local ICON, GAP     = 30, 4   -- Gegenstandssymbole unten
@@ -461,7 +461,49 @@ local TOOLS = {
       function() M:InsertBlock(TABLE, 2, #COL1) end },
     { "Block", L["Code block  ``` ... ```"], function() M:InsertBlock("```\n\n```", 4, 0) end },
     { L["Rule"], L["Horizontal rule  ---"], function() M:InsertBlock("---") end },
+    false,
+    { ns.Markdown.MarkerIcon(1, 14), L["Raid marker  {star} {skull} ...\nLike in chat. English, German or {rt1} to {rt8}."],
+      function(btn) M:MarkerMenu(btn) end },
 }
+
+-- Auswahl der acht Zielmarkierungen unter dem Knopf. Hängt an der
+-- Werkzeugleiste und verschwindet mit ihr.
+function M:MarkerMenu(btn)
+    local menu = self.markerMenu
+    if not menu then
+        menu = U:Skin(CreateFrame("Frame", nil, self.frame.toolbar), 0.95)
+        menu:SetFrameLevel(self.frame.toolbar:GetFrameLevel() + 30)
+        menu:SetSize(8 * 24 + 6, 30)
+        local names = GetLocale() == "deDE" and ns.Markdown.MARKER_NAMES_DE
+                      or ns.Markdown.MARKER_NAMES_EN
+        for i = 1, 8 do
+            local b = CreateFrame("Button", nil, menu)
+            b:SetSize(22, 22)
+            b:SetPoint("LEFT", 4 + (i - 1) * 24, 0)
+            local icon = b:CreateTexture(nil, "ARTWORK")
+            icon:SetAllPoints()
+            icon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i)
+            b:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
+            b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.2)
+            local tag = "{" .. names[i] .. "}"
+            b:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+                GameTooltip:AddLine(tag, 1, 1, 1)
+                GameTooltip:Show()
+            end)
+            b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            b:SetScript("OnClick", function()
+                menu:Hide()
+                M:Wrap(tag, "", "")
+            end)
+        end
+        menu:Hide()
+        self.markerMenu = menu
+    end
+    menu:ClearAllPoints()
+    menu:SetPoint("TOPRIGHT", btn, "BOTTOMRIGHT", 0, -2)
+    menu:SetShown(not menu:IsShown())
+end
 
 function M:BuildToolbar(f, left)
     local bar = CreateFrame("Frame", nil, f)

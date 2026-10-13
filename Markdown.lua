@@ -15,6 +15,7 @@
 --   > Zitat, ---, ``` Codeblock ```
 --   | a | b |         Tabellen, mit |---|:--:|--:| für Kopf und Ausrichtung
 --   [Text](https://…) und nackte https://-Adressen als Links
+--   {stern} {totenschädel} {rt1}  Zielmarkierungen wie im Chat
 --
 -- Links öffnet WoW nicht im Browser - für Addons gibt es diesen Weg
 -- nicht. Ein Klick legt die Adresse markiert ins Kopierfenster.
@@ -407,6 +408,27 @@ MD.COLOR = {
     muted  = "|cff9aa0aa",
 }
 
+-- Zielmarkierungen, geschrieben wie im Chat: {rt1} bis {rt8}, englisch
+-- oder deutsch - unabhängig von der Spielsprache, damit eine geteilte
+-- Notiz bei allen gleich aussieht.
+local MARKERS = {
+    star = 1,     stern = 1,
+    circle = 2,   kreis = 2,   coin = 2,
+    diamond = 3,  diamant = 3,
+    triangle = 4, dreieck = 4,
+    moon = 5,     mond = 5,
+    square = 6,   quadrat = 6,
+    cross = 7,    kreuz = 7,   x = 7,
+    skull = 8,    ["totenschädel"] = 8, totenkopf = 8, ["schädel"] = 8,
+}
+for i = 1, 8 do MARKERS["rt" .. i] = i end
+MD.MARKER_NAMES_EN = { "star", "circle", "diamond", "triangle", "moon", "square", "cross", "skull" }
+MD.MARKER_NAMES_DE = { "stern", "kreis", "diamant", "dreieck", "mond", "quadrat", "kreuz", "totenschädel" }
+
+function MD.MarkerIcon(i, size)
+    return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. i .. ":" .. (size or 0) .. "|t"
+end
+
 -- ---------------------------------------------------------------- Wegpunkte
 
 -- "/way [#Karten-ID | Zonenname] x y [Titel]" - die TomTom-Schreibweise,
@@ -496,6 +518,12 @@ function MD.Inline(s)
         local w = MD.ParseWay(args)
         if w then s = head .. stash(MD.WayLink(w)) end
     end
+
+    -- Unbekanntes in {} bleibt stehen, wie es ist.
+    s = s:gsub("{([^{}]+)}", function(name)
+        local i = MARKERS[lower(name)]
+        if i then return stash(MD.MarkerIcon(i)) end
+    end)
 
     s = s:gsub("%[([^%]]+)%]%(([^%)%s]+)%)", function(label, url)
         return stash(linkFor(url, label))
