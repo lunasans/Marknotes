@@ -490,8 +490,8 @@ function MD.Inline(s)
 
     s = s:gsub("`([^`]+)`", function(c) return stash(MD.COLOR.code .. c .. "|r") end)
 
-    -- Wegpunkt: alles ab "/way" bis zum Zeilenende.
-    local head, args = s:match("^(.-)/way%s+(.+)$")
+    -- Wegpunkt: alles ab "/way" (oder TomToms "/tway") bis zum Zeilenende.
+    local head, args = s:match("^(.-)/t?way%s+(.+)$")
     if head then
         local w = MD.ParseWay(args)
         if w then s = head .. stash(MD.WayLink(w)) end
