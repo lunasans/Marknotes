@@ -110,6 +110,32 @@ local function alignOf(cell)
     return "LEFT"
 end
 
+-- Hervorhebung um den Anfang eines Listenpunkts oder einer Überschrift
+-- nach innen holen: "**- [x] Text**" und "- **[x] Text**" werden zu
+-- "- [x] **Text**", "- **[x]** Text" zu "- [x] Text", "**# Text**" zu
+-- "# **Text**". Sonst ist die Zeile keine Liste, keine Checkbox und
+-- keine Überschrift.
+local EMPHASIS = { ["**"] = true, ["__"] = true, ["~~"] = true, ["*"] = true, ["_"] = true }
+
+local function liftEmphasis(line)
+    for _, prefix in ipairs({ "[%-%*%+]%s+", "#+%s+" }) do
+        local ind, em, mark, body = line:match("^(%s*)([%*_~]+)(" .. prefix .. ")(.*)$")
+        if em and EMPHASIS[em] and #body > #em and body:sub(-#em) == em then
+            line = ind .. mark .. em .. body
+            break
+        end
+    end
+    local head, em2, box, tail = line:match("^(%s*[%-%*%+]%s+)([%*_~]+)(%[[ xX]%]%s*)(.*)$")
+    if em2 and EMPHASIS[em2] then
+        if tail:sub(1, #em2) == em2 then
+            line = head .. box .. tail:sub(#em2 + 1):gsub("^%s+", "")
+        else
+            line = head .. box .. em2 .. tail
+        end
+    end
+    return line
+end
+
 local function indentOf(ws)
     local width = #ws:gsub("\t", "    ")
     return math.min(4, math.floor(width / 2))
@@ -341,13 +367,18 @@ function MD.Parse(text)
             i = i + 1
 
         else
+            line = liftEmphasis(line)
             local hashes, htext = line:match("^%s*(#+)%s+(.+)$")
             local ind, rest     = line:match("^(%s*)[%-%*%+]%s+(.*)$")
             local oind, num, orest = line:match("^(%s*)(%d+)[%.%)]%s+(.*)$")
 
             if hashes and #hashes <= 6 then
+                htext = htext:gsub("%s+#+%s*$", "")
+                -- Ganz fett: eigene Darstellung, siehe Render.
+                local inner = htext:match("^%*%*(.-)%*%*$") or htext:match("^__(.-)__$")
+                local bold = inner and inner ~= "" and not inner:find("%*%*")
                 add({ type = "heading", level = math.min(#hashes, 3),
-                      text = htext:gsub("%s+#+%s*$", "") })
+                      text = bold and inner or htext, bold = bold })
 
             -- Vor den Listen: "* * *" ist eine Linie, keine Aufzählung.
             elseif line:match("^%s*([%-%*_])%s*%1%s*%1[%s%-%*_]*$") then
@@ -795,6 +826,16 @@ function MD:Render(view, source, width)
             fs:SetTextColor(accent[1], accent[2], accent[3])
             fs:SetText(MD.Inline(b.text))
             fs:SetPoint("TOPLEFT", 0, y)
+            -- Fett gibt es in einer FontString nicht. Eine zweite Kopie
+            -- ein Pixel daneben macht die Striche sichtbar dicker und
+            -- lässt die Überschrift in ihrer Farbe.
+            if b.bold then
+                local again = text(view, width)
+                headingFont(again, HEAD_SIZE[b.level])
+                again:SetTextColor(accent[1], accent[2], accent[3])
+                again:SetText(MD.Inline(b.text))
+                again:SetPoint("TOPLEFT", 1, y)
+            end
             y = y - math.ceil(fs:GetStringHeight()) - 4
             if b.level == 1 then
                 local l = rect(view, "ARTWORK", accent[1], accent[2], accent[3], 0.35)
