@@ -403,7 +403,67 @@ MD.COLOR = {
     strike = "|cff808080",
     code   = "|cffe6b464",
     link   = "|cff7aa2f7",
+    way    = "|cffffd100",
+    muted  = "|cff9aa0aa",
 }
+
+-- ---------------------------------------------------------------- Wegpunkte
+
+-- "/way [#Karten-ID | Zonenname] x y [Titel]" - die TomTom-Schreibweise,
+-- wie sie in Guides und Wowhead-Kommentaren steht:
+--   /way 47.5 62.3 Bankier            (aktuelle Zone)
+--   /way #2112 47.5 62.3 Bankier      (Karten-ID)
+--   /way Valdrakken 47.5, 62.3 Bankier
+-- Liefert nil, wenn keine Koordinaten darin stehen - dann bleibt der Text.
+function MD.ParseWay(args)
+    local id, x, y, title = args:match("^#(%d+)%s+([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+    local zone
+    if not id then
+        x, y, title = args:match("^([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+        if not x then
+            zone, x, y, title = args:match("^(.-)%s+([%d%.]+)[%s,]+([%d%.]+)%s*(.-)%s*$")
+        end
+    end
+    x, y = tonumber(x), tonumber(y)
+    if not x or not y or x > 100 or y > 100 then return nil end
+    return {
+        mapID = tonumber(id), x = x, y = y, title = title or "",
+        zone  = (zone and zone:match("%S")) and zone or nil,
+    }
+end
+
+-- Optional vom Aufrufer gesetzt: Karten-ID -> Name. Der Parser selbst
+-- kennt keine Spiel-API.
+MD.MapName  = nil
+MD.WAYPOINT = ns.L and ns.L["Waypoint"] or "Waypoint"
+local PIN = "|A:Waypoint-MapPin-ChatIcon:13:13:0:0|a"
+
+-- Link "way:<ID oder 0>:<x>:<y>:<Zone>:<Titel>" - der Titel steht
+-- zuletzt und darf Doppelpunkte enthalten.
+function MD.WayLink(w)
+    local data = table.concat({ w.mapID or 0, w.x, w.y, (w.zone or ""):gsub(":", " "), w.title }, ":")
+    local where = w.zone or (w.mapID and MD.MapName and MD.MapName(w.mapID)) or nil
+    local coords = w.x .. ", " .. w.y
+    local label, extra
+    if w.title ~= "" then
+        label, extra = w.title, where and (where .. " " .. coords) or coords
+    else
+        label, extra = where or MD.WAYPOINT, coords
+    end
+    return "|Hway:" .. data .. "|h" .. MD.COLOR.way .. PIN .. " " .. label .. "|r "
+        .. MD.COLOR.muted .. extra .. "|r|h"
+end
+
+-- Gegenstück für den Klick: Link-Daten zurück in Felder.
+function MD.ParseWayLink(link)
+    local id, x, y, zone, title = link:match("^way:([^:]*):([^:]*):([^:]*):([^:]*):(.*)$")
+    if not id then return nil end
+    id = tonumber(id)
+    return {
+        mapID = (id and id > 0) and id or nil, x = tonumber(x), y = tonumber(y),
+        zone = zone ~= "" and zone or nil, title = title or "",
+    }
+end
 
 local function linkFor(url, label)
     return "|Hurl:" .. url .. "|h" .. MD.COLOR.link .. label .. "|r|h"
@@ -429,6 +489,13 @@ function MD.Inline(s)
     s = s:gsub("|A.-|a", stash)
 
     s = s:gsub("`([^`]+)`", function(c) return stash(MD.COLOR.code .. c .. "|r") end)
+
+    -- Wegpunkt: alles ab "/way" bis zum Zeilenende.
+    local head, args = s:match("^(.-)/way%s+(.+)$")
+    if head then
+        local w = MD.ParseWay(args)
+        if w then s = head .. stash(MD.WayLink(w)) end
+    end
 
     s = s:gsub("%[([^%]]+)%]%(([^%)%s]+)%)", function(label, url)
         return stash(linkFor(url, label))
