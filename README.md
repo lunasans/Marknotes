@@ -11,6 +11,7 @@
   - **Checklists** – tick items off with a click in the preview
   - Quotes, horizontal rules and code blocks with a **Copy** button
   - Links – click to copy the address
+  - **Raid markers** like in chat: `{skull}`, `{star}`, `{rt1}`–`{rt8}` (German names work too)
 - **Toolbar** – one click for headings, bold, lists, checkboxes, tables, links and more
 - **Item links**
   - Shift-click any item while the window is open
@@ -56,6 +57,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
   - **Checklisten** – in der Ansicht per Klick abhaken
   - Zitate, Trennlinien und Codeblöcke mit **Kopieren**-Knopf
   - Links – ein Klick kopiert die Adresse
+  - **Zielmarkierungen** wie im Chat: `{totenschädel}`, `{stern}`, `{rt1}`–`{rt8}` (englische Namen gehen auch)
 - **Werkzeugleiste** – ein Klick für Überschriften, Fett, Listen, Checkboxen, Tabellen, Links und mehr
 - **Gegenstandslinks**
   - Shift-Klick auf einen Gegenstand, solange das Fenster offen ist
