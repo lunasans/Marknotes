@@ -28,6 +28,7 @@ local MD = ns.Markdown
 local HEADER   = 20     -- Höhe der Kopfzeile
 local PAD      = 8      -- Innenabstand
 local AUTO_MAX = 500    -- Höchsthöhe ohne "höhe"
+local TEXTURES = "Interface\\AddOns\\Marknotes\\Textures\\"
 
 P.frames = {}           -- Notiz-Tabelle -> Fenster
 local free = {}         -- unbenutzte Fenster zum Wiederverwenden
@@ -88,7 +89,7 @@ local function create()
 
     head.title = head:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     head.title:SetPoint("LEFT", PAD, 0)
-    head.title:SetPoint("RIGHT", -22, 0)
+    head.title:SetPoint("RIGHT", -40, 0)
     head.title:SetJustifyH("LEFT")
     head.title:SetWordWrap(false)
     head.title:SetTextColor(W.ACCENT[1], W.ACCENT[2], W.ACCENT[3])
@@ -112,6 +113,41 @@ local function create()
         GameTooltip:Hide()
     end)
     close:SetScript("OnClick", function() P:Unpin(f.note) end)
+
+    -- Schloss: schaltet "fixieren" in der Notiz um. Eigene Texturen
+    -- (Textures\Lock.tga und Unlock.tga, aus media\lock.py). Offen etwas
+    -- blasser, unter der Maus voll.
+    local lock = CreateFrame("Button", nil, head)
+    lock:SetSize(16, 16)
+    lock:SetPoint("RIGHT", close, "LEFT", -1, 0)
+    lock.icon = lock:CreateTexture(nil, "ARTWORK")
+    lock.icon:SetAllPoints()
+    function lock:Paint()
+        local locked = f.settings and f.settings.lock
+        local lit = locked or self:IsMouseOver()
+        self.icon:SetTexture(TEXTURES .. (locked and "Lock" or "Unlock"))
+        self.icon:SetDesaturated(not lit)
+        self.icon:SetAlpha(lit and 1 or 0.6)
+    end
+    lock:SetScript("OnEnter", function(self)
+        self:Paint()
+        local locked = f.settings.lock
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(locked and L["Unlock"] or L["Lock"], 1, 1, 1)
+        GameTooltip:AddLine(locked and L["Sets the note to \"lock: no\"."]
+            or L["Sets the note to \"lock: yes\" - it can no longer be dragged."],
+            0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    lock:SetScript("OnLeave", function(self)
+        self:Paint()
+        GameTooltip:Hide()
+    end)
+    lock:SetScript("OnClick", function(self)
+        P:SetLock(f.note, not f.settings.lock)
+        if GameTooltip:IsOwned(self) then self:GetScript("OnEnter")(self) end
+    end)
+    head.lock = lock
 
     -- Doppelklick auf die Kopfzeile öffnet die Notiz im Fenster.
     head:EnableMouse(true)
@@ -195,6 +231,7 @@ local function layout(f, cfg)
 
     f.head:SetShown(cfg.title)
     f.head.title:SetText(ns.Notes.Label(f.note, f.index or 1))
+    f.head.lock:Paint()
     local top = cfg.title and (HEADER + 4) or PAD
 
     local inner = cfg.width - 2 * PAD
@@ -262,6 +299,14 @@ end
 
 function P:Unpin(note)
     note.text = MD.SetPin(note.text, false, GetLocale() == "deDE")
+    note.updated = time()
+    self:Update()
+    ns.Notes:NoteChanged(note)
+    ns.Share:Changed(note)
+end
+
+function P:SetLock(note, on)
+    note.text = MD.SetLock(note.text, on, GetLocale() == "deDE")
     note.updated = time()
     self:Update()
     ns.Notes:NoteChanged(note)
