@@ -36,6 +36,12 @@ local function trim(s)
     return (s:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
+-- Nur A-Z klein machen. string.lower richtet sich nach dem Gebietsschema
+-- und verändert dann die Bytes von Umlauten ("höhe" würde nicht erkannt).
+local function lower(s)
+    return (s:gsub("[A-Z]", string.lower))
+end
+
 -- Buchstaben, die hinter | eine WoW-Steuerfolge bilden (Farbe, Link,
 -- Textur, Atlas, Umbruch ...). Ein | davor ist KEIN Tabellentrenner.
 local ESCAPE = "[cCrRHhTtAaKkn]"
@@ -269,7 +275,7 @@ function MD.Inline(s)
 
     -- Unbekanntes in {} bleibt stehen, wie es ist.
     s = s:gsub("{([^{}]+)}", function(name)
-        local i = MARKERS[name:lower()]
+        local i = MARKERS[lower(name)]
         if i then return stash(MD.MarkerIcon(i)) end
     end)
 
