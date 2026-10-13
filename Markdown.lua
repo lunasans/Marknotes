@@ -217,6 +217,28 @@ function MD.SetPin(text, on, german)
     return table.concat(ls, "\n")
 end
 
+-- Eigene Haken in eine neue Fassung übernehmen: Jede Checkbox, deren
+-- Text in der alten Fassung abgehakt war, bleibt abgehakt. Gebraucht
+-- beim Aktualisieren geteilter Notizen - wer selbst etwas abgehakt hat,
+-- verliert das nicht, nur weil die Raidleitung eine Zeile ergänzt.
+function MD.KeepChecks(new, old)
+    local done = {}
+    for line in ((old or "") .. "\n"):gmatch("(.-)\n") do
+        local item = line:match("^%s*[%-%*%+]%s+%[[xX]%]%s*(.-)%s*$")
+        if item then done[item] = true end
+    end
+
+    local out = {}
+    for line in ((new or "") .. "\n"):gmatch("(.-)\n") do
+        local head, gap, item = line:match("^(%s*[%-%*%+]%s+)%[ %](%s*)(.-)%s*$")
+        if item and done[item] then
+            line = head .. "[x]" .. gap .. line:sub(#head + 4 + #gap)
+        end
+        out[#out + 1] = line
+    end
+    return table.concat(out, "\n")
+end
+
 -- Text ohne Kopfblock (für Listenbeschriftung und Ähnliches).
 function MD.Body(text)
     local _, close = MD.Meta(text)

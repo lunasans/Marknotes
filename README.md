@@ -17,6 +17,7 @@
   - Or use **+ Item**: type a name (bags and equipment), an item ID or paste a Wowhead link
   - All items of a note appear as icons below it – click one to **search it at the Auction House**
 - **Pin notes to the screen** – show any note as a small Markdown window right on your UI, with clickable checklists; set it up inside the note itself (see below)
+- **Share with your group or raid** – send a note to everyone in your group who has Marknotes; they're asked once, after that **every change you make updates their copy automatically** (their own ticks stay)
 - **Auction House button** – open your notes right next to the Auction House
 - **Resizable window** – size and position are remembered
 - **Minimap button** – left-click opens, right-click creates a new note, drag to move
@@ -30,6 +31,7 @@
 |---|---|
 | `/notiz` or `/marknotes` | Open / close |
 | `/notiz new` | New note |
+| `/notiz share` | Share the current note with your group / raid |
 | `/notiz minimap` | Show / hide the minimap button |
 
 ## Pinned notes
@@ -61,6 +63,8 @@ Drag the window to move it, double-click the title bar to open the note, click *
 
 ## Good to know
 
+- A shared note stays live until you click **Shared → Stop sharing**. **Send again** reaches players who joined later. Receivers keep their own ticks and pin setting; other edits they make are replaced by the next update.
+- Sharing uses hidden addon messages, so only players with Marknotes receive notes. The game limits how fast they go out – a long note takes a few seconds – and blocks them during boss fights in instances.
 - WoW does not let addons open a browser or write to the clipboard. Clicking a link or **Copy** shows the text selected in a small window – just press **Ctrl+C**.
 - Finding an item by name only works for items the game knows right now (bags, equipment, recently seen). For anything else use the item ID or a Wowhead link.
 - Markdown you paste from elsewhere works – item links you add in game.
@@ -90,6 +94,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
   - Oder **+ Gegenstand**: Name (Taschen und Ausrüstung), Item-ID oder Wowhead-Link eingeben
   - Alle Gegenstände einer Notiz stehen als Symbole darunter – ein Klick **sucht im Auktionshaus**
 - **Notizen anheften** – jede Notiz als kleines Markdown-Fenster direkt auf dem Bildschirm, Checklisten per Klick abhakbar; eingestellt wird in der Notiz selbst (siehe unten)
+- **Mit Gruppe oder Schlachtzug teilen** – eine Notiz an alle in der Gruppe senden, die Marknotes haben; sie werden einmal gefragt, danach **aktualisiert sich ihre Kopie bei jeder Änderung automatisch** (eigene Haken bleiben)
 - **Knopf am Auktionshaus** – Notizen direkt daneben öffnen
 - **Fenstergröße veränderbar** – Größe und Position werden gemerkt
 - **Minimap-Knopf** – Linksklick öffnet, Rechtsklick legt eine neue Notiz an, Ziehen verschiebt
@@ -103,6 +108,7 @@ All Rights Reserved. You may download and use Marknotes freely; redistributing o
 |---|---|
 | `/notiz` oder `/marknotes` | Öffnen / schließen |
 | `/notiz neu` | Neue Notiz |
+| `/notiz teilen` | Aktuelle Notiz mit Gruppe / Schlachtzug teilen |
 | `/notiz minimap` | Minimap-Knopf ein- / ausblenden |
 
 ## Angeheftete Notizen
@@ -134,6 +140,8 @@ Fenster ziehen zum Verschieben, Doppelklick auf die Titelzeile öffnet die Notiz
 
 ## Gut zu wissen
 
+- Eine geteilte Notiz bleibt live, bis du **Geteilt → Teilen beenden** wählst. **Erneut senden** erreicht Spieler, die später dazugekommen sind. Empfänger behalten ihre eigenen Haken und ihr Anheften; andere eigene Änderungen ersetzt das nächste Update.
+- Geteilt wird über unsichtbare Addon-Nachrichten, deshalb kommen Notizen nur bei Spielern mit Marknotes an. Das Spiel begrenzt das Tempo – eine lange Notiz braucht ein paar Sekunden – und sperrt sie im Bosskampf in Instanzen.
 - Addons dürfen in WoW keinen Browser öffnen und nichts in die Zwischenablage legen. Ein Klick auf einen Link oder **Kopieren** zeigt den Text markiert in einem kleinen Fenster – einfach **Strg+C** drücken.
 - Die Suche nach Namen findet nur Gegenstände, die das Spiel gerade kennt (Taschen, Ausrüstung, kürzlich gesehen). Für alles andere die Item-ID oder einen Wowhead-Link nehmen.
 - Markdown von anderswo lässt sich einfügen – Gegenstandslinks fügst du im Spiel hinzu.

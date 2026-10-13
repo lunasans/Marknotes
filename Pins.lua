@@ -257,6 +257,7 @@ function P:ToggleCheck(note, line)
     note.updated = time()
     self:Update()
     ns.Notes:NoteChanged(note)
+    ns.Share:Changed(note)
 end
 
 function P:Unpin(note)
@@ -264,6 +265,7 @@ function P:Unpin(note)
     note.updated = time()
     self:Update()
     ns.Notes:NoteChanged(note)
+    ns.Share:Changed(note)
 end
 
 -- Die Notiz im großen Fenster öffnen.

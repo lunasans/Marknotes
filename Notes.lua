@@ -506,7 +506,7 @@ function M:Build()
 
     local titleBox = CreateFrame("EditBox", nil, f)
     titleBox:SetPoint("TOPLEFT", left, -50)
-    titleBox:SetPoint("TOPRIGHT", -206, -50)
+    titleBox:SetPoint("TOPRIGHT", -298, -50)
     titleBox:SetHeight(22)
     titleBox:SetAutoFocus(false)
     titleBox:SetFontObject(ChatFontNormal)
@@ -523,6 +523,7 @@ function M:Build()
             note.updated = time()
             M:RefreshList()
             ns.Pins:Schedule()
+            ns.Share:Changed(note)
         end
     end)
     titleBox:SetScript("OnEnterPressed", function() f.edit:SetFocus() end)
@@ -546,6 +547,14 @@ function M:Build()
     pin:ClearAllPoints()
     pin:SetPoint("TOPRIGHT", -110, -50)
     f.pinButton = pin
+
+    -- Mit der Gruppe / dem Schlachtzug teilen (Share.lua).
+    local share = W:Button(f, { label = L["Share"], width = 86, height = 22,
+                                tooltip = L["Send this note to your group or raid.\nOthers need Marknotes too and are asked before it is added.\nAfter that, every change is sent automatically."],
+                                onClick = function() M:Share() end })
+    share:ClearAllPoints()
+    share:SetPoint("TOPRIGHT", -202, -50)
+    f.shareButton = share
 
     -- Markdown-Knöpfe, nur beim Bearbeiten. Das Textfeld rückt dafür
     -- eine Zeile nach unten; die Ansicht braucht sie nicht.
@@ -708,6 +717,7 @@ function M:SaveText()
     self:RefreshList()
     self:RefreshPinButton()
     ns.Pins:Schedule()
+    ns.Share:Changed(note)
 end
 
 -- Lese-Ansicht neu zeichnen. Die Scrollstelle bleibt, damit ein
@@ -752,6 +762,7 @@ function M:ToggleCheck(line)
     self.frame.edit:SetText(note.text)
     self:RenderView()
     ns.Pins:Update()
+    ns.Share:Changed(note)
 end
 
 -- Eine Notiz wurde außerhalb des Fensters geändert (angeheftete Notiz:
@@ -771,6 +782,20 @@ function M:RefreshPinButton()
     local meta = note and ns.Markdown.Meta(note.text)
     local pinned = meta and ns.Markdown.Bool(meta.pin, false)
     f.pinButton.label:SetText(pinned and L["Unpin"] or L["Pin"])
+    f.shareButton.label:SetText(ns.Share:IsShared(note) and L["Shared"] or L["Share"])
+end
+
+-- Teilen. Ist die Notiz schon geteilt, fragen: noch einmal senden
+-- (für alle, die später dazugekommen sind) oder Teilen beenden.
+function M:Share()
+    local note = self:Current()
+    if not note or not (note.text or ""):match("%S") then return end
+    if ns.Share:IsShared(note) then
+        StaticPopup_Show("MARKNOTES_SHARED", nil, nil, note)
+    else
+        ns.Share:Send(note)
+        self:RefreshPinButton()
+    end
 end
 
 -- Anheften umschalten: "anheften: ja/nein" im Kopfblock der Notiz.
@@ -783,6 +808,7 @@ function M:TogglePin()
     note.updated = time()
     self:NoteChanged(note)
     ns.Pins:Update()
+    ns.Share:Changed(note)
 end
 
 function M:RefreshList()
@@ -1073,6 +1099,21 @@ StaticPopupDialogs["MARKNOTES_DELETE"] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs["MARKNOTES_SHARED"] = {
+    text         = L["This note is shared - changes go to your group automatically."],
+    button1      = L["Send again"],
+    button2      = CANCEL,
+    button3      = L["Stop sharing"],
+    OnAccept     = function(_, note) ns.Share:Send(note) end,
+    OnAlt        = function(_, note)
+        ns.Share:Stop(note)
+        M:RefreshPinButton()
+    end,
+    timeout      = 0,
+    whileDead    = true,
+    hideOnEscape = true,
+}
+
 ns:On("PLAYER_LOGIN", function()
     -- Das Auktionshaus lädt erst beim ersten Besuch.
     M:HookAuctionHouse()
@@ -1101,9 +1142,12 @@ SlashCmdList.MARKNOTES = function(msg)
     elseif cmd == "new" or cmd == "neu" then
         M:Show()
         M:New()
+    elseif cmd == "share" or cmd == "teilen" then
+        M:Show()
+        M:Share()
     elseif cmd == "minimap" then
         ns.Minimap:Toggle()
     else
-        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz minimap|r show/hide button."])
+        ns:Print(L["Commands: |cffffff00/notiz|r open, |cffffff00/notiz new|r new note, |cffffff00/notiz share|r share with group, |cffffff00/notiz minimap|r show/hide button."])
     end
 end
